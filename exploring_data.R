@@ -12,7 +12,7 @@ sum(sapply(user$friends, length) >= 100)
 user100 <- user[sapply(user$friends, length) >= 100,]
 
 user100$friendsCounts <- lapply(user100$friends, function(u) {
-        sapply(u[[1]], function(f){
+        sapply(unlist(u), function(f){
                 length(user$friends[user$user_id == f][[1]])
         })
 })
