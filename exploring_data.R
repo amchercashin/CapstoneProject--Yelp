@@ -36,6 +36,7 @@ user100$friendsCountsFSDcor <- sapply(user100$friendsCountsFSD, function(fsd) {
 })
 
 
+
 #Plot FSD counts with Benford's distribution reference
 strangeUsers <- which(user100$friendsCountsFSDcor < .8)
 bp <- barplot(table(user100$friendsCountsFSD[[strangeUsers[4]]]) / length(user100$friendsCountsFSD[[strangeUsers[4]]]), 
@@ -53,3 +54,20 @@ rbenford <- function(n, max) {
         for(i in 1:n) { out[i] <- runif(1, max = upper_bounds[i]) }
         out
 }
+
+
+rb <- sapply(1:5000, function(n) rbenford(150,3000))
+
+rb_fsd <- apply(rb, 2, function(col) {
+        sapply(col, function(el) {
+                as.integer(substr(as.character(format(abs(el), scientific = TRUE)), start = 1, stop = 1))
+        }
+     )})
+rb_fsd <- as.data.frame(rb_fsd)
+rb_fsd <- as.data.frame(lapply(rb_fsd, function(col) {factor(col, levels = 1:9)}))
+
+rb_fsd_cor <- sapply(rb_fsd, function(fsd) {
+        cor(table(fsd) / length(fsd), benfordDistr)
+})
+
+head(sort(rb_fsd_cor))
