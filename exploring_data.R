@@ -1,18 +1,22 @@
 library(jsonlite)
 
 # Reading data
-business <- stream_in(file("./data/yelp_academic_dataset_business.json"))
-checkin <- stream_in(file("./data/yelp_academic_dataset_checkin.json"))
-review <- stream_in(file("./data/yelp_academic_dataset_review.json"))
-tip <- stream_in(file("./data/yelp_academic_dataset_tip.json"))
-user <- stream_in(file("./data/yelp_academic_dataset_user.json"))
+# business <- stream_in(file("./data/yelp_academic_dataset_business.json"))
+# saveRDS(business, "./data/businessRDS")
 
+# checkin <- stream_in(file("./data/yelp_academic_dataset_checkin.json"))
+# saveRDS(checkin, "./data/checkinRDS")
+
+# review <- stream_in(file("./data/yelp_academic_dataset_review.json"))
+# saveRDS(review, "./data/reviewRDS")
+
+# tip <- stream_in(file("./data/yelp_academic_dataset_tip.json"))
+
+# user <- stream_in(file("./data/yelp_academic_dataset_user.json"))
+
+tip <- readRDS("./data/tipRDS")
+user <- readRDS("./data/userRDS")
+business <- readRDS("./data/businessRDS")
+checkin <- readRDS("./data/checkinRDS")
 #Exploratory data analisis
-sum(sapply(user$friends, length) >= 100)
-user100 <- user[sapply(user$friends, length) >= 100,]
 
-user100$friendsCounts <- lapply(user100$friends, function(u) {
-        sapply(unlist(u), function(f){
-                length(user$friends[user$user_id == f][[1]])
-        })
-})
