@@ -14,9 +14,10 @@ library(jsonlite)
 
 # user <- stream_in(file("./data/yelp_academic_dataset_user.json"))
 
-tip <- readRDS("./data/tipRDS")
-user <- readRDS("./data/userRDS")
+#tip <- readRDS("./data/tipRDS")
+#user <- readRDS("./data/userRDS")
 business <- readRDS("./data/businessRDS")
-checkin <- readRDS("./data/checkinRDS")
+#checkin <- readRDS("./data/checkinRDS")
 #Exploratory data analisis
 
+qplot(business$attributes$`Wi-Fi`, stars, data = business, geom = "boxplot")
