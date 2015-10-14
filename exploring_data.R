@@ -1,5 +1,5 @@
 library(jsonlite)
-
+library(ggplot2)
 # Reading data
 # business <- stream_in(file("./data/yelp_academic_dataset_business.json"))
 # saveRDS(business, "./data/businessRDS")
@@ -19,5 +19,6 @@ library(jsonlite)
 business <- readRDS("./data/businessRDS")
 #checkin <- readRDS("./data/checkinRDS")
 #Exploratory data analisis
+bars <- sapply(business$categories, function(x) "Bars" %in% x)
 
-qplot(business$attributes$`Wi-Fi`, stars, data = business, geom = "boxplot")
+qplot(x = attributes$`Wi-Fi`, y = stars, data = business[bars,], geom = "boxplot", facets =  ~ state)
