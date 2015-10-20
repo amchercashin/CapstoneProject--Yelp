@@ -26,6 +26,6 @@ Restaurants <- sapply(business$categories, function(x) "Restaurants" %in% x)
 
 qplot(x = attributes$`Wi-Fi`, y = stars, data = business[Restaurants,], geom = "boxplot", facets =  ~ state)
 
-model <- lm(stars ~ business$attributes$`Noise Level` + attributes$`Price Range` + 
+lm_model <- lm(stars ~ business$attributes$`Noise Level` + attributes$`Price Range` + 
                       attributes$`Wi-Fi` + business$attributes$`Has TV`,
               data = business, subset = Restaurants)
