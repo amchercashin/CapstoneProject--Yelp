@@ -18,14 +18,18 @@ library(MASS)
 #tip <- readRDS("./data/tipRDS")
 #user <- readRDS("./data/userRDS")
 business <- readRDS("./data/businessRDS")
-business$stars <- factor(business$stars, levels = seq(1,5,0.5), ordered = TRUE)
+
 #checkin <- readRDS("./data/checkinRDS")
 #Exploratory data analisis
 bars <- sapply(business$categories, function(x) "Bars" %in% x)
-Restaurants <- sapply(business$categories, function(x) "Restaurants" %in% x)
+restaurants <- sapply(business$categories, function(x) "Restaurants" %in% x)
+restaurants <- flatten(business[restaurants,])
+#qplot(x = attributes$`Wi-Fi`, y = stars, data = business[Restaurants,], geom = "boxplot", facets =  ~ state)
 
-qplot(x = attributes$`Wi-Fi`, y = stars, data = business[Restaurants,], geom = "boxplot", facets =  ~ state)
-
-lm_model <- lm(stars ~ business$attributes$`Noise Level` + attributes$`Price Range` + 
-                      attributes$`Wi-Fi` + business$attributes$`Has TV`,
+lm_model <- lm(stars ~ business$attributes$`Noise Level` * business$attributes$`Has TV`,
               data = business, subset = Restaurants)
+
+business$stars <- factor(business$stars, levels = seq(1,5,0.5), ordered = TRUE)
+
+ol_model <- polr(stars ~ business$attributes$`Noise Level` * business$attributes$`Has TV`,
+                 data = business, subset = Restaurants, method = "logistic")
