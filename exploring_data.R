@@ -47,21 +47,28 @@ restaurants$cat <- factor(restaurants$cat, levels = c("Restaurant", "Sports Bar"
 restaurants$attributes.Accepts.Credit.Cards <- ifelse(sapply(restaurants$attributes.Accepts.Credit.Cards, length) == 0, NA, 
                                                       unlist(restaurants$attributes.Accepts.Credit.Cards))
 na_cols <- sapply(restaurants, function(x) sum(is.na(x))) / nrow(restaurants) > 0.3
-restaurants <- restaurants[, !na_cols]
+restaurants <- restaurants[, !na_cols]; rm(na_cols)
 
 nz_attr <- nearZeroVar(restaurants[,14:46])
-restaurants <- restaurants[, -(nz_attr+13)]
+restaurants <- restaurants[, -(nz_attr+13)]; rm(nz_attr)
 
-qplot(x = factor(attributes.Noise.Level), y = stars, data = restaurants, geom = "boxplot", facets = attributes.Has.TV ~ cat)
+feature_names <- colnames(restaurants)[14:33]
+#qplot(x = factor(attributes.Noise.Level), y = stars, data = restaurants, geom = "boxplot", facets = attributes.Has.TV ~ cat)
+comp_cases <- complete.cases(restaurants[, feature_names])
+
+la_model <- cv.glmnet(x = model.matrix(~ ., restaurants[comp_cases, feature_names])[,-1],
+                      y = restaurants$stars[comp_cases],
+                      family = "gaussian",
+                      type.measure="mse"
+                      )
+bestLambdaCol <- which(la_model$lambda==la_model$lambda.1se)
+lassoImpVars <- names(which(la_model$glmnet.fit$beta[,bestLambdaCol]!=0))
+#lm_model <- lm(stars ~ cat + attributes.Noise.Level,
+#               data = restaurants)
 
 
 
-lm_model <- lm(stars ~ cat + attributes.Noise.Level,
-               data = restaurants)
 
-ls_model <- cv.glmnet()
-
-
-business$stars <- factor(business$stars, levels = seq(1,5,0.5), ordered = TRUE)
-ol_model <- polr(stars ~ business$attributes$`Noise Level` * business$attributes$`Has TV`,
-                 data = business, subset = Restaurants, method = "logistic")
+#business$stars <- factor(business$stars, levels = seq(1,5,0.5), ordered = TRUE)
+#ol_model <- polr(stars ~ business$attributes$`Noise Level` * business$attributes$`Has TV`,
+#                 data = business, subset = Restaurants, method = "logistic")
