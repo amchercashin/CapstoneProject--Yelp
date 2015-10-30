@@ -44,7 +44,7 @@ restaurants$attributes.Noise.Level <- as.integer(restaurants$attributes.Noise.Le
 #Parking to three categories: free, paid, no ----
 parkingCols <- grep("Parking", colnames(restaurants), value = TRUE)
 restaurants[,parkingCols][is.na(restaurants[,parkingCols])] <- "n_a"
-restaurants$park <- ifelse(restaurants$attributes.Parking.garage == "FALSE" &
+restaurants$parking <- ifelse(restaurants$attributes.Parking.garage == "FALSE" &
                            restaurants$attributes.Parking.validated == "FALSE" &
                            restaurants$attributes.Parking.lot == "FALSE" &
                            restaurants$attributes.Parking.valet == "FALSE" &
@@ -52,8 +52,9 @@ restaurants$park <- ifelse(restaurants$attributes.Parking.garage == "FALSE" &
                            ifelse(restaurants$attributes.Parking.garage == "TRUE" |
                                   restaurants$attributes.Parking.validated == "TRUE" |
                                   restaurants$attributes.Parking.lot == "TRUE" |
-                                  restaurants$attributes.Parking.valet == "TRUE", "free", 
-                                  ifelse(restaurants$attributes.Parking.street == "TRUE", "paid", NA)))
+                                  restaurants$attributes.Parking.valet == "TRUE", "yes", 
+                                  ifelse(restaurants$attributes.Parking.street == "TRUE", "street", NA)))
+restaurants$parking <- factor(restaurants$parking, levels = c("no", "yes", "street"))
 
 #Making an new atttribute type of restaurant busyness: sportbar, bar, restaurant-----
 sportbars <- sapply(restaurants$categories, function(x) "Sports Bars" %in% x)
