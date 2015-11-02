@@ -108,7 +108,7 @@ cities<-c('Edinburgh, UK', 'Karlsruhe, Germany', 'Montreal, Canada', 'Waterloo, 
           'Pittsburgh, PA', 'Charlotte, NC', 'Urbana-Champaign, IL', 'Phoenix, AZ', 'Las Vegas, NV', 'Madison, WI')
 city_centres<-geocode(cities)
 #set.seed(43046721)
-geo_cluster<-kmeans(restaurants[,c('longitude','latitude')],city.centres)
+geo_cluster<-kmeans(restaurants[,c('longitude','latitude')],city_centres)
 city2<- factor(geo_cluster$cluster, levels=1:10, labels = cities)
 region <- ifelse(geo_cluster$cluster<=2, "Europe", ifelse(geo_cluster$cluster<=4, "Canada", "USA"))
 
