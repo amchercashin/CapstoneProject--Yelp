@@ -146,6 +146,7 @@ summary(lm(formula = stars ~ I(attributes.Noise.Level^2), data = restaurants, su
 
 summary(lm(formula = stars ~ region+cat1+cat2+parking+I(attributes.Noise.Level^2), data = restaurants, subset = comp_cases))
 
+prevCat <- sapply(restaurants$categories, function(x) ifelse(x[[1]]=="Restaurants" & length(x)>1, x[[2]], x[[1]]))
 la_cat_model <- cv.glmnet(x = model.matrix(~., data.frame(b = restaurants$attributes.Price.Range[comp_cases],a=prevCat[comp_cases]))[,-1],
                       y = restaurants$stars[comp_cases],
                       family = "gaussian",
