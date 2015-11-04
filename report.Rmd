@@ -1,0 +1,37 @@
+---
+title: "Some busyness attributes effects on busyness star rating"
+author: "Alexandr Cherkashin"
+date: "4 ноября 2015 г."
+output: pdf_document
+---
+
+# Introduction
+
+This report provides an attempt to find some objective business characteristics that affects busnesses star rating. There is no goal of building comprehensive predictive model. Instead there is an attempt to keeping in mind collinearity possobilities separately identify meaningful attributes that busyness could deal with to improve it star rating on Yelp.
+
+# Methods and Data
+
+In analysis we will use Yelp business dataset. This dataset contains `star` variable that is an averaged business star rating from 1 to 5 star rounded to half of a star. It will be our response variable.
+
+In addition dataset containse several busyness characteristics some of them we will use as predictors. There are differents kinds of variables. Some of them we will tranform. From latitude and longitude we'll generate `region` variable wich  
+
+# Results
+
+# Discussion
+
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
