@@ -1,0 +1,10 @@
+base
+jsonlite
+ggplot2
+MASS
+Matrix
+foreach
+glmnet
+lattice
+caret
+ggmap

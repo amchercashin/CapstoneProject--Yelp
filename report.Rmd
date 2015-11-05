@@ -1,21 +1,167 @@
 ---
-title: "Some busyness attributes effects on busyness star rating"
+title: "Restaurant busyness attributes effects on business star rating"
 author: "Alexandr Cherkashin"
 date: "4 ноября 2015 г."
-output: pdf_document
+output: html_document
 ---
+
+```{r data loading and munging, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
+library(jsonlite)
+library(ggplot2)
+library(MASS)
+library(glmnet)
+library(caret)
+# Reading data----
+
+business <- readRDS("./data/businessRDS")
+
+#EXPLORATORY-----
+bars <- sapply(business$categories, function(x) "Bars" %in% x)
+bars <- flatten(business[bars,])
+restaurants <- sapply(business$categories, function(x) "Restaurants" %in% x)
+restaurants <- flatten(business[restaurants,])
+
+#DATA MUNGING
+# Convinient column names----
+colnames(restaurants) <- make.names(colnames(restaurants))
+
+#Noise level attribute to integer level----
+restaurants$attributes.Noise.Level[restaurants$attributes.Noise.Level == "quiet"] <- 0
+restaurants$attributes.Noise.Level[restaurants$attributes.Noise.Level == "average"] <- 1
+restaurants$attributes.Noise.Level[restaurants$attributes.Noise.Level == "loud"] <- 2
+restaurants$attributes.Noise.Level[restaurants$attributes.Noise.Level == "very_loud"] <- 3
+restaurants$attributes.Noise.Level <- as.integer(restaurants$attributes.Noise.Level)
+
+#Parking to three categories: free, paid, no ----
+parkingCols <- grep("Parking", colnames(restaurants), value = TRUE)
+restaurants[,parkingCols][is.na(restaurants[,parkingCols])] <- "n_a"
+restaurants$parking <- ifelse(restaurants$attributes.Parking.garage == "FALSE" &
+                           restaurants$attributes.Parking.validated == "FALSE" &
+                           restaurants$attributes.Parking.lot == "FALSE" &
+                           restaurants$attributes.Parking.valet == "FALSE" &
+                           restaurants$attributes.Parking.street == "FALSE", "no", 
+                           ifelse(restaurants$attributes.Parking.garage == "TRUE" |
+                                  restaurants$attributes.Parking.validated == "TRUE" |
+                                  restaurants$attributes.Parking.lot == "TRUE" |
+                                  restaurants$attributes.Parking.valet == "TRUE", "yes", 
+                                  ifelse(restaurants$attributes.Parking.street == "TRUE", "street", NA)))
+restaurants$parking <- factor(restaurants$parking, levels = c("no", "yes", "street"))
+
+#Making an new atttribute type of restaurant busyness: sportbar, bar, restaurant-----
+sportbars <- sapply(restaurants$categories, function(x) "Sports Bars" %in% x)
+bars <- sapply(restaurants$categories, function(x) !"Sports Bars" %in% x & "Bars" %in% x)
+restaurants$cat <- ifelse(sportbars, "Sports Bar", ifelse(bars, "Bar", "Restaurant"))
+restaurants$cat <- factor(restaurants$cat, levels = c("Restaurant", "Sports Bar", "Bar"))
+
+#Flatten Accepts credit cars attribute----
+restaurants$attributes.Accepts.Credit.Cards <- ifelse(sapply(restaurants$attributes.Accepts.Credit.Cards, length) == 0, NA, 
+                                                      unlist(restaurants$attributes.Accepts.Credit.Cards))
+
+#Dealing with categories vars----
+cat2 <- sapply(restaurants$categories, function(x) {
+        if (sum(x=="Afghan")>0|sum(x=="African")>0|sum(x=="Asian Fusion")>0|sum(x=="Bangladeshi")>0|sum(x=="Basque")>0|
+            sum(x=="Bavarian")>0|sum(x=="Belgian")>0|sum(x=="British")>0|sum(x=="aCajun/Creole")>0|sum(x=="Cambodian")>0|
+            sum(x=="Cantonese")>0|sum(x=="Cuban")>0|sum(x=="Egyptian")>0|sum(x=="Ethiopian")>0|sum(x=="French")>0|
+            sum(x=="German")>0|sum(x=="Greek")>0|sum(x=="Hawaiian")>0|sum(x=="Himalayan/Nepalese")>0|sum(x=="Hungarian")>0|
+            sum(x=="Indian")>0|sum(x=="Indonesian")>0|sum(x=="Irish")>0|sum(x=="Italian")>0|sum(x=="Japanese")>0|
+            sum(x=="Korean")>0|sum(x=="Latin American")>0|sum(x=="Lebanese")>0|sum(x=="Malaysian")>0|sum(x=="Mediterranean")>0|
+            sum(x=="Arabian")>0|sum(x=="Argentine")>0|sum(x=="Australian")>0|sum(x=="Brazilian")>0|sum(x=="Caribbean")>0|
+            sum(x=="Arabian")>0|sum(x=="Argentine")>0|sum(x=="Australian")>0|sum(x=="Brazilian")>0|sum(x=="Caribbean")>0|
+            sum(x=="Chinese")>0|sum(x=="Colombian")>0|sum(x=="Czech")>0|sum(x=="Eastern European")>0|sum(x=="Eastern German")>0|
+            sum(x=="Ethnic Food")>0|sum(x=="Filipino")>0|sum(x=="Czech")>0|sum(x=="Haitian")>0|sum(x=="Iberian")>0|
+            sum(x=="Laotian")>0|sum(x=="Middle Eastern")>0|sum(x=="Modern European")>0|sum(x=="Mongolian")>0|sum(x=="Moroccan")>0|
+            sum(x=="Oriental")>0|sum(x=="Pakistani")>0|sum(x=="Persian/Iranian")>0|sum(x=="Peruvian")>0|sum(x=="Polish")>0|
+            sum(x=="Portuguese")>0|sum(x=="Russian")>0|sum(x=="Scandinavian")>0|sum(x=="Scottish")>0|sum(x=="Shanghainese")>0|
+            sum(x=="Singaporean")>0|sum(x=="Southern")>0|sum(x=="Spanish")>0|sum(x=="Szechuan")>0|sum(x=="Taiwanese")>0|
+            sum(x=="Thai")>0|sum(x=="Trinidadian")>0|sum(x=="Turkish")>0|sum(x=="Ukrainian")>0|sum(x=="Uzbek")>0|
+            sum(x=="Venezuelan")>0|sum(x=="Vietnamese")>0|sum(x=="Turkish")>0|sum(x=="Ukrainian")>0|sum(x=="Uzbek")>0) {
+                "ThemedOther"}
+        else {if(sum(x=="American (New)")>0|sum(x=="American (Traditional)")>0) {"ThemedAmerican"}
+                else {if (sum(x=="Mexican")>0|sum(x=="Tex-Mex")>0) {"ThemedMexican"}
+                        else "NotThemed"}
+                }
+})
+
+cat1 <- sapply(restaurants$categories, function(x) {
+        if (sum(x=="Buffets")>0) "Buffets"
+        else if(sum(x=="Fast Food")>0|sum(x=="Chicken Wings")>0|sum(x=="Burgers")>0|sum(x=="Pizza")>0) "Fast Food"
+                #else if (sum(x=="Restaurants")>0) "Restaurants"
+                        else if (sum(x=="Bars")>0|sum(x=="Pubs")>0|sum(x=="Irish Pub")>0) "Bars"
+                                else if (sum(x=="Cafes")>0) "Cafes"
+                                        else "Other"
+        
+})
+
+#Geographocals points----
+library(ggmap)
+cities<-c('Edinburgh, UK', 'Karlsruhe, Germany', 'Montreal, Canada', 'Waterloo, Canada', 
+          'Pittsburgh, PA', 'Charlotte, NC', 'Urbana-Champaign, IL', 'Phoenix, AZ', 'Las Vegas, NV', 'Madison, WI')
+city_centres<-geocode(cities)
+geo_cluster<-kmeans(restaurants[,c('longitude','latitude')],city_centres)
+city2<- factor(geo_cluster$cluster, levels=1:10, labels = cities)
+region <- ifelse(geo_cluster$cluster<=2, "Europe", ifelse(geo_cluster$cluster<=4, "Canada", "USA"))
+
+#Sorting out vars with lots of NA----        
+na_cols <- sapply(restaurants, function(x) sum(is.na(x))) / nrow(restaurants) > 0.3
+restaurants <- restaurants[, !na_cols]; rm(na_cols)
+
+#Sorting out near zero variance vars----        
+nz_attr <- nearZeroVar(restaurants[,14:46])
+restaurants <- restaurants[, -(nz_attr+13)]; rm(nz_attr)
+
+#Determine features----
+feature_names <- colnames(restaurants)[14:36]
+feature_names <- feature_names[!(feature_names %in% parkingCols)]
+feature_names <- feature_names[!grepl("Good.For", feature_names)]
+feature_names <- feature_names[!grepl("Good.for", feature_names)]
+feature_names <- feature_names[!grepl("Ambience", feature_names)]
+
+comp_cases <- complete.cases(restaurants[, feature_names])
+prevCat <- sapply(restaurants$categories, function(x) ifelse(x[[1]]=="Restaurants" & length(x)>1, x[[2]], x[[1]]))
+```
 
 # Introduction
 
-This report provides an attempt to find some objective business characteristics that affects busnesses star rating. There is no goal of building comprehensive predictive model. Instead there is an attempt to keeping in mind collinearity possobilities separately identify meaningful attributes that busyness could deal with to improve it star rating on Yelp.
+This report provides an attempt to find some objective restaurant characteristics which affects business star rating. There is no goal of building comprehensive predictive model. Instead there is an attempt to keeping in mind collinearity possobilities separately identify meaningful attributes that busyness of type restaurants could deal with to improve it star rating on Yelp.
 
 # Methods and Data
 
-In analysis we will use Yelp business dataset. This dataset contains `star` variable that is an averaged business star rating from 1 to 5 star rounded to half of a star. It will be our response variable.
+In analysis we will use Yelp business dataset. This dataset contains `star` variable that is an averaged business star rating from 1 to 5 star rounded to half of a star. It will be our response variable. As we interesed in businesses with type "restaurant" we'll take into analysis only observations with string "Restaurants" in `categories` variable.
 
-In addition dataset containse several busyness characteristics some of them we will use as predictors. There are differents kinds of variables. Some of them we will tranform. From latitude and longitude we'll generate `region` variable wich  
+In addition dataset contain several busyness characteristics some of them we will use as predictors. There are differents kinds of variables. Some of them we will tranform:
+
+1. From latitude and longitude we'll generate `region` variable wich can take three different values: USA, Canada, Europe.
+2. `attributes.Noise.Level` will be encoded into integer,  from "quiet" to "very_loud"" into `0:3`.
+3. Attributes related to *parking* we will transform to `parking` variable with 3 different values: "no"" if there is no parking avalible, "yes" if there are some parking option exept it is not parking street, "street" if there is parking street there.
+4. From `categories` var there would be an attempt to make var with some sort of geographic theme or cuisine: `ThemedAmerican`, `ThemedMexican`, `ThemedOther` - al other regional themes, and `NotThemed`.
+5. Another attemp of categorixation based on `categories` variable would be type of restaurant business: `Buffets`, `Fast Food`, `Bars`, `Cafes`, `Other`.
+
+There are some variables which containes "Good.For" or "Ambience" substrings in their names. Such vars appears a little vague on what they means and how they measures. In this report we will not take them into analisys, concentrating on more clear some.
+
+Other variables will be taken without tranformation.
+
+There will be no attempts to impute missing values. Only `complete.cases` will be taken.
+
+For the details please look as report.Rmd file at 
+
+There were some hesitaion on what model to choose. Actually, our response: `stars`, which measure in halfs of a star from 0 to 5, could be interpreted as an ordered factor variable. It has an ordered nature for sure, it is an averaged users star rating rounded to half of a star, there is no clue that the "distances" between star halfs are the same despite their location. So models like [ordered logit](https://web.stanford.edu/~hastie/Papers/ordered.pdf) or [ordered probit](http://web.stanford.edu/class/polisci203/ordered.pdf) could be used.
+
+But after all consideration choice was made in favor of linear models. The main point of this is that the goal of this work is not to build a good predictive model. Instead, we'd like to find what affects star rating most and try to infer the effect and *interpret* it. So the interpretability is what most valuable, and linear model is really easyer to interpret. So will use linear models and refer to `star` variable like it was a real number.
 
 # Results
+
+### Noise level
+First of all we found that `attributes.Noise.Level` have a big sustainible effect on star rating. And it looks like the effect is accelerating: every next level of loudness give an more and more negative effect on ratig. It appears quadratic is the best simple approximation of this effect:
+
+```{r anova, echo=FALSE}
+anova(lm(formula = stars ~ I(attributes.Noise.Level), data = restaurants, subset = comp_cases), lm(formula = stars ~ I(attributes.Noise.Level^2), data = restaurants, subset = comp_cases), lm(formula = stars ~ I(attributes.Noise.Level^3), data = restaurants, subset = comp_cases), lm(formula = stars ~ I(attributes.Noise.Level^4), data = restaurants, subset = comp_cases), lm(formula = stars ~ exp(attributes.Noise.Level), data = restaurants, subset = comp_cases))
+```
+
+The effect itself seems strong. We have found no collinearity with other availible variables, exept mild effect of:
+
+```{r lm noise, echo=FALSE}
+summary(lm(formula = stars ~ I(attributes.Noise.Level^2), data = restaurants, subset = comp_cases))
+```
 
 # Discussion
 
