@@ -96,11 +96,12 @@ cat1 <- sapply(restaurants$categories, function(x) {
         if (sum(x=="Buffets")>0) "Buffets"
         else if(sum(x=="Fast Food")>0|sum(x=="Chicken Wings")>0|sum(x=="Burgers")>0|sum(x=="Pizza")>0) "Fast Food"
                 #else if (sum(x=="Restaurants")>0) "Restaurants"
-                        else if (sum(x=="Bars")>0|sum(x=="Pubs")>0|sum(x=="Irish Pub")>0) "Bars"
+                        #else if (sum(x=="Bars")>0|sum(x=="Pubs")>0|sum(x=="Irish Pub")>0) "Bars"
                                 else if (sum(x=="Cafes")>0) "Cafes"
-                                        else "Other"
+                                        else "OtherRestaurants"
         
 })
+cat1 <- factor(cat1, levels = c("Cafes","OtherRestaurants", "Fast Food", "Buffets"))
 
 #Geographocals points----
 library(ggmap)
@@ -111,6 +112,7 @@ city_centres<-geocode(cities)
 geo_cluster<-kmeans(restaurants[,c('longitude','latitude')],city_centres)
 city2<- factor(geo_cluster$cluster, levels=1:10, labels = cities)
 region <- ifelse(geo_cluster$cluster<=2, "Europe", ifelse(geo_cluster$cluster<=4, "Canada", "USA"))
+region <- factor(region, levels = c("Europe", "Canada", "USA"))
 
 #Sorting out vars with lots of NA----        
 na_cols <- sapply(restaurants, function(x) sum(is.na(x))) / nrow(restaurants) > 0.3
@@ -127,6 +129,8 @@ feature_names <- feature_names[!grepl("Good.For", feature_names)]
 feature_names <- feature_names[!grepl("Good.for", feature_names)]
 feature_names <- feature_names[!grepl("Ambience", feature_names)]
 
+alco <- factor(ifelse(restaurants$attributes.Alcohol=="none", "NO", "YES"), levels = c("NO", "YES"))
+
 #MODELING----
 
 #qplot(x = factor(attributes.Noise.Level), y = stars, data = restaurants, geom = "boxplot", facets = attributes.Has.TV ~ cat)
@@ -142,9 +146,9 @@ lassoImpVars <- names(which(la_model$glmnet.fit$beta[,bestLambdaCol]!=0))
 #lm_model <- lm(stars ~ cat + attributes.Noise.Level,
 #               data = restaurants)
 
-summary(lm(formula = stars ~ I(attributes.Noise.Level^2), data = restaurants, subset = comp_cases))
+summary(lm(formula = stars ~ region + cat1 + parking + alco + cat1:alco + parking:alco + I(attributes.Price.Range^4) + I(attributes.Noise.Level^2), data = restaurants, subset = comp_cases))
 
-summary(lm(formula = stars ~ region+cat1+cat2+parking+I(attributes.Noise.Level^2), data = restaurants, subset = comp_cases))
+#summary(lm(formula = stars ~ region + cat1*attributes.Alcohol, data = restaurants, subset = comp_cases))
 
 prevCat <- sapply(restaurants$categories, function(x) ifelse(x[[1]]=="Restaurants" & length(x)>1, x[[2]], x[[1]]))
 la_cat_model <- cv.glmnet(x = model.matrix(~., data.frame(b = restaurants$attributes.Price.Range[comp_cases],a=prevCat[comp_cases]))[,-1],
