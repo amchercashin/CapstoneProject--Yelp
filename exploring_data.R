@@ -87,7 +87,7 @@ cat2 <- sapply(restaurants$categories, function(x) {
             sum(x=="Venezuelan")>0|sum(x=="Vietnamese")>0|sum(x=="Turkish")>0|sum(x=="Ukrainian")>0|sum(x=="Uzbek")>0) {
                 "ThemedOther"}
         else {if(sum(x=="American (New)")>0|sum(x=="American (Traditional)")>0) {"ThemedAmerican"}
-                else {if (sum(x=="Mexican")>0|sum(x=="Tex-Mex")>0) {"ThemedMexican"}
+                else {if (sum(x=="Mexican")>0|sum(x=="Tex-Mex")>0) {"ThemedOther"}
                         else "NotThemed"}
                 }
 })
@@ -146,7 +146,9 @@ lassoImpVars <- names(which(la_model$glmnet.fit$beta[,bestLambdaCol]!=0))
 #lm_model <- lm(stars ~ cat + attributes.Noise.Level,
 #               data = restaurants)
 
-summary(lm(formula = stars ~ region + cat1 + parking + alco + cat1:alco + parking:alco + I(attributes.Price.Range^4) + I(attributes.Noise.Level^2), data = restaurants, subset = comp_cases))
+summary(lm(formula = stars ~ region + cat1 + cat2 + attributes.Outdoor.Seating + parking + alco + 
+                   cat1:alco + parking:alco + I(attributes.Price.Range^4) + I(attributes.Noise.Level^2), 
+           data = restaurants, subset = comp_cases))
 
 #summary(lm(formula = stars ~ region + cat1*attributes.Alcohol, data = restaurants, subset = comp_cases))
 
