@@ -117,21 +117,21 @@ In addition dataset contain several busyness characteristics some of them we wil
 
 Other variables will be taken from dataset without tranformation.
 
-There are some variables which containes "Good.For" or "Ambience" substrings in their names. Such vars appears a little vague on what they means and how they were measured. In this report we will not take them into analisys, concentrating on more clear some.
+There are some variables which containes "Good.For" or "Ambience" substrings in their names. Such vars appears a little vague on what they mean and how they were measured. In this report we will not take them into analisys, concentrating on more clear some.
 
-There will be no attempts to impute missing values. Only `complete.cases` will be taken. Also we will not use vars with near zero variance.
+There will be no attempts to impute missing values. Only `complete.cases` will be taken.
 
-For the details about feature engeneering and other data preparation steps please refer to R code in "report.Rmd"" file at: https://github.com/amchercashin/CapstoneProject--Yelp/tree/business-analisys 
+For the details about feature engeneering and other data preparation steps please refer to R code in "report.Rmd"" file at: (https://github.com/amchercashin/CapstoneProject--Yelp/tree/business-analisys)
 
 ### Methods
 
-There were some hesitaion on what model to choose. Actually, our response: `stars`, which measure in halfs of a star from 0 to 5, could be interpreted as an ordered factor variable. It has an ordered nature for sure, it is an averaged users star rating rounded to half of a star, there is no clue that the "distances" between star halfs are the same despite their location. So models like [ordered logit](https://web.stanford.edu/~hastie/Papers/ordered.pdf) or [ordered probit](http://web.stanford.edu/class/polisci203/ordered.pdf) could be used.
+There were some hesitaion on what model to choose. Actually, our response: `stars`, which was measured in halfs of a star from 0 to 5, could be interpreted as an ordered factor variable. It has an ordered nature for sure, it is an averaged users star rating rounded to half of a star. But there is no clue that the "distances" between star halfs are the same despite their location. So models like [ordered logit](https://web.stanford.edu/~hastie/Papers/ordered.pdf) or [ordered probit](http://web.stanford.edu/class/polisci203/ordered.pdf) could make sence.
 
-But after all consideration choice was made in favor of linear models. The main point of this is that the goal of this work is not to build a good predictive model. Instead, we'd like to find what affects star rating most and try to infer the effect and *interpret* it. So the interpretability is what most valuable, and linear model is really easyer to interpret. So will use linear models and refer to `star` variable like it was a real number.
+But after all considerations choice was made in favor of linear model. The main point of this is that the goal of this work is not to build a good predictive model. Instead, we'd like to find what affects star rating most and try to infer the effect and *interpret* it. So the interpretability is what most valuable, and linear model is really easyer to interpret. So will use linear models and refer to `star` variable like it was a real number.
 
 # Results
 
-With variables wich left after data preparation and feature engeneering we build the linear model, let's look at `summary` of it:
+With variables wich left after data preparation and feature engeneering we build the linear model, let's look at `summary` table of it:
 
 ```{r model, echo=FALSE}
 summary(lm(formula = stars ~ region + cat1 + cat2 + attributes.Outdoor.Seating + parking + alco + 
@@ -139,62 +139,37 @@ summary(lm(formula = stars ~ region + cat1 + cat2 + attributes.Outdoor.Seating +
            data = restaurants, subset = comp_cases))
 ```
 
-The impact of variables which are absent in table was considered both small and not very sustainable.
+The impact of variables which are absent in table was considered both small and not very sustainable. The process of choosing variables was in fact manual. Tries and errors, so the is not much sence descrinig it here.
 
 Let's look at the model closer. The *intercept* - the baseline - is an Cafe in Europe whithout alcohol, with no regional theme, without outdoor seating and without any parking option.
 
-We see that there are different intercepts of star rating for different regions and different categories of restaurans. There is a tendancy to rate them more in Europe, in Canada mean rating is smaller by 0.17 os a star and in USA further by next 0.13. What is interesting is such a negative effect of being fast food and buffet *exept* you are offering alcohol there! As for cafes alcohol is a bad idea and for other restaurants it is ok.
+We see that there are different intercepts of star rating for different regions and different categories of restaurants. There is a tendancy to rate them more in Europe, in Canada mean rating is smaller by 0.17 of a star and in USA even less by next 0.12. What is interesting that it is such a negative effect of being fast food and buffet *exept* you are offering alcohol there! As for cafes alcohol is a bad idea and for other restaurants it is ok.
 
-Parking usually gives significant boost to score, especially if there is a parking street. But.. the effect shrinks by half if you offer alcohol there.
+Parking usually gives significant boost to score, especially if there is a parking street. But.. the effect shrinks by half if you offer alcohol at place.
 
-THere is a tendancy to rate restaurants with American theme litlle less then other. The effect is small, but still. Outdoor seatings gives a little plus to overall rating.
+There is a tendancy to rate restaurants with American theme litlle less then other. The effect is small, but nevertheless. Outdoor seatings gives a little plus to overall rating.
 
-It is interesting how noise levels affects rating. It looks like that negative effect of increasing noise is accelerative in nature: every next level of loudness give an more and more negative effect on ratig. From different approxiamtion we choose a one simpe: quadratic.
+It is interesting how noise level affects rating. It looks like that negative effect of increasing noise is accelerative in nature: every next level of loudness gives a more and more negative effect on ratig. From different approxiamtions we choose a one simpe: quadratic.
 
 ```{r anova, echo=FALSE}
 anova(lm(formula = stars ~ I(noise_level), data = restaurants, subset = comp_cases), lm(formula = stars ~ I(noise_level^2), data = restaurants, subset = comp_cases), lm(formula = stars ~ I(noise_level^3), data = restaurants, subset = comp_cases), lm(formula = stars ~ I(noise_level^4), data = restaurants, subset = comp_cases), lm(formula = stars ~ exp(noise_level), data = restaurants, subset = comp_cases))
 ```
 
-So it looks like that people tolerance to the noise is falling rapidly. There is a half of a star between "quite" and "very_loud" levels: 3 ^ 2 * 0.0532 = 0.48, and most of it is beetween very loud and average levels. If you have a very loud enviermonet you can gain 0.27 of a star goind one step towards quite and 0.16 more going one step further. We have found no collinearity with other availible variables, but there could be some with different types of restautants. Another question is how noise levels was measured.
+It is better then other and simplier to interpret than a large polynome.
+
+So it looks like that people tolerance to the noise is falling rapidly. There is a half of a star between "quite" and "very_loud" levels: 3 ^ 2 * 0.0543 = 0.49, and most of it is beetween very loud and average levels. If you have a very loud enviermonet you can gain 0.27 of a star goind one step towards quite and 0.16 more going one step further. We have found no correlation with other availible variables, but there could be some with different types of restautants. And another important question is how noise levels was measured, it's a pity we don't know.
 
 There is a small but sustainable positive effect of price range. It is non linear too, but still it is small.
 
 # Discussion
 
-First of all, an adjusted R-squared of presented model is 0.1242. So the model describes only 12.5% of variance in restaurants ratings. Suerly every restaurant is different and there are much more important things like quality of food, quality of service, good location spots and others and which really should describe the rest.
+First of all, an adjusted R-squared of presented model is 0.1208. So the model describes only 12% of variance in restaurant ratings. Suerly every restaurant is different and there are much more important things like quality of food, quality of service, good location spots and others and which really should describe the rest.
 
-But as we see there are some objective, impersonal and measurable factors which could also affect rating. It looks like that working on them could increase it.
+But as we see we already have some objective, impersonal and measurable factors which could also affect rating. It looks like that working on them could increase bysiness appeal.
 
-Certainly there are numerous interaction possibilities wich are hard to explore. The main conclusion that we draw from this analisys was that it is better to concentrate on even more narrow theme. For an example like exploaring only for one narrow type of of restaurant in specific city. And if you suceed you can compair you result to another types or cities. Also it looks like that such separate analysys could have more value.
+Certainly there are numerous interaction possibilities wich are hard to explore. One of the main conclusions that we draw from this analisys was that it is better to concentrate on even more narrow theme. For an example like exploaring only for one narrow type of of restaurant in specific city. And if you suceed you can compare you results to other types or cities. Also it looks like that such separate analysys could have more real value.
 
-There was some simplifications in feature desing. The main reason was to decrease feature space for better interpretability. That was the price for choosing a broad question. `cat2` variable is an example: surely it should be more specific. Typology based on `categories` original variable is a deep question by itself  
+There was some simplifications in feature desing. The main reason was to decrease feature space for better interpretability. That was the price for choosing a broad question. `cat2` variable is an example: surely it should be more specific. Typology based on `categories` original variable is a deep question by itself.
 
-Another point: there are some doubts about several variables. Actually it could be that pricerange variable with combinations for an example with alcohol and categories - all are signs of some hidden "type of restaurant" variable.
+Another point: there are some doubts about several variables. Actually it could be that pricerange variable with combinations for an example with alcohol and categories - all are signs of some hidden "type of restaurant" variable. Really good typology of bysnesses again is a hard question by itself.
 
-
-
-
-
-
-
-
-
-
-
-
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r}
-summary(cars)
-```
-
-You can also embed plots, for example:
-
-```{r, echo=FALSE}
-plot(cars)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
