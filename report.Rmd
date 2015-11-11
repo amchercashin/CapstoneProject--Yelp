@@ -1,7 +1,7 @@
 ---
 title: "Restaurant busyness attributes effects on business star rating"
 author: "Alexandr Cherkashin"
-date: "4 ноября 2015 г."
+date: "11.11.2015"
 output: pdf_document
 ---
 

@@ -1,0 +1,17 @@
+base
+methods
+datasets
+utils
+grDevices
+graphics
+stats
+jsonlite
+ggplot2
+MASS
+Matrix
+foreach
+glmnet
+lattice
+caret
+ggmap
+knitr

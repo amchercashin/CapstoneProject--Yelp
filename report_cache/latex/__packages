@@ -1,0 +1,12 @@
+base
+methods
+datasets
+utils
+grDevices
+graphics
+stats
+jsonlite
+lattice
+ggplot2
+caret
+ggmap
