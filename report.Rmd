@@ -113,7 +113,7 @@ In addition dataset contain several busyness characteristics some of them we wil
 3. Attributes related to *parking* we will transform to `parking` variable with 3 different values: "no"" if there is no parking available, "yes" if there are some parking option except it is not parking street, "street" if there is parking street there.
 4. From `categories` var there would be an attempt to make var with some sort of geographic theme or cuisine: `ThemedAmerican`, `ThemedOther` - all other regional themes, and `NotThemed`.
 5. Another attempt of categorization based on `categories` variable would be type of restaurant business: `Buffets`, `Fast Food`, `Bars`, `Cafes`, `Other`.
-6. `attributes.Alcohol` we'll simplify to two level factor: `YES` - if there is some, otherwise - `NO` and stored in `alco` variable.
+6. `attributes.Alcohol` we'll simplify to two level factor: `YES` - if there is some, otherwise - `NO` and store it in `alco` variable.
 
 Other variables will be taken from dataset without transformation.
 
@@ -121,25 +121,28 @@ There are some variables which contains "Good.For" or "Ambiance" substrings in t
 
 There will be no attempts to impute missing values. Only `complete.cases` will be taken.
 
-For the details about feature engineering and other data preparation steps please refer to R code in "report.Rmd"" file at: (https://github.com/amchercashin/CapstoneProject--Yelp/tree/business-analisys)
+For the details about feature engineering and other data preparation steps please refer to R code in "report.Rmd"" file at: [https://github.com/amchercashin/CapstoneProject--Yelp/tree/business-analisys](https://github.com/amchercashin/CapstoneProject--Yelp/tree/business-analisys)
 
 ### Methods
 
-There were some hesitation on what model to choose. Actually, our response: `stars`, which was measured in halves of a star from 0 to 5, could be interpreted as an ordered factor variable. It has an ordered nature for sure, it is an averaged users star rating rounded to half of a star. But there is no clue that the "distances" between star halves are the same despite their location. So models like [ordered logit](https://web.stanford.edu/~hastie/Papers/ordered.pdf) or [ordered probit](http://web.stanford.edu/class/polisci203/ordered.pdf) could make sense.
+There was some hesitation on what model to choose. Actually, our response: `stars`, which was measured in halves of a star from 0 to 5, could be interpreted as an ordered factor variable. It has an ordered nature for sure, it is an averaged users star rating rounded to half of a star. And there is no guarantee that the "distances" between star halves are same despite their location. So models like [ordered logit](https://web.stanford.edu/~hastie/Papers/ordered.pdf) or [ordered probit](http://web.stanford.edu/class/polisci203/ordered.pdf) could make sense.
 
-But after all considerations choice was made in favor of linear model. The main point of this is that the goal of this work is not to build a good predictive model. Instead, we'd like to find what affects star rating most and try to infer the effect and *interpret* it. So the interpretability is what most valuable, and linear model is really easier to interpret. So will use linear models and refer to `star` variable like it was a real number.
+But after all considerations choice was made in favor of linear model. The main point is that the goal of this work is not to build a good predictive model. Instead, we'd like to find what affects star rating most and try to infer the effect and *interpret* it. So the interpretability is has the most value. And linear model is really easier to interpret. So we'll use linear models and refer to `star` variable like it is a real number.
 
 # Results
 
-With variables which left after data preparation and feature engineering we build the linear model, let's look at `summary` table of it:
+With variables which left after data preparation and feature engineering the process of variable choosing started. The process in fact was manual. Tries and errors. So the is not much sense describing the full path here. After all the linear model was buit:
 
-```{r model, echo=FALSE}
-summary(lm(formula = stars ~ region + cat1 + cat2 + attributes.Outdoor.Seating + parking + alco + 
+```{r model, echo=FALSE, message=FALSE}
+s <- summary(lm(formula = stars ~ region + cat1 + cat2 + attributes.Outdoor.Seating + parking + alco + 
                    cat1:alco + parking:alco + I(attributes.Price.Range^4) + I(noise_level^2), 
            data = restaurants, subset = comp_cases))
 ```
+```{r, echo=FALSE}
+s$call
+```
 
-The impact of variables which are absent in table was considered both small and not very sustainable. The process of choosing variables was in fact manual. Tries and errors, so the is not much sense describing it here.
+The impact of variables which are absent in summary table was considered both small and not very sustainable. 
 
 Let's look at the model closer. The *intercept* - the baseline - is an Cafe in Europe without alcohol, with no regional theme, without outdoor seating and without any parking option.
 
