@@ -69,7 +69,7 @@ img {
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>This report provides an attempt to find some objective restaurant characteristics which affects business star rating. There is no goal of building comprehensive predictive model. Instead there is an attempt to identify meaningful attributes that busyness of type restaurants could deal with to improve their star rating on Yelp.</p>
+<p>This report provides an attempt to find some objective restaurant characteristics which affects business star rating. There is no goal of building comprehensive predictive model. Instead there is an attempt to identify meaningful attributes that busyness of type “restaurants” could deal with to improve their star rating on Yelp. Anderstanding what is important to customers is crucial for running bysiness and we hope this report could help.</p>
 </div>
 <div id="methods-and-data" class="section level1">
 <h1>Methods and Data</h1>
@@ -136,7 +136,6 @@ img {
 ## Residual standard error: 0.612 on 14868 degrees of freedom
 ## Multiple R-squared:  0.1219, Adjusted R-squared:  0.1208 
 ## F-statistic: 114.6 on 18 and 14868 DF,  p-value: &lt; 2.2e-16</code></pre>
-<pre><code>## [1] &quot;Table 1&quot;</code></pre>
 <p>The impact of variables which are absent in table was considered both small and not very sustainable. The process of choosing variables was in fact manual. Tries and errors, so the is not much sence descrinig it here.</p>
 <p>Let’s look at the model closer. The <em>intercept</em> - the baseline - is an Cafe in Europe whithout alcohol, with no regional theme, without outdoor seating and without any parking option.</p>
 <p>We see that there are different intercepts of star rating for different regions and different categories of restaurants. There is a tendancy to rate them more in Europe, in Canada mean rating is smaller by 0.17 of a star and in USA even less by next 0.12. What is interesting that it is such a negative effect of being fast food and buffet <em>exept</em> you are offering alcohol there! As for cafes alcohol is a bad idea and for other restaurants it is ok.</p>
