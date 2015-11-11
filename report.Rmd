@@ -2,7 +2,7 @@
 title: "Restaurant busyness attributes effects on business star rating"
 author: "Alexandr Cherkashin"
 date: "11.11.2015"
-output: pdf_document
+output: html_document
 ---
 
 ```{r data loading and munging, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
@@ -131,48 +131,120 @@ But after all considerations choice was made in favor of linear model. The main 
 
 # Results
 
-With variables which left after data preparation and feature engineering the process of variable choosing started. The process in fact was manual. Tries and errors. So the is not much sense describing the full path here. After all the linear model was buit:
+With variables which left after data preparation and feature engineering the process of variable choosing started. The process in fact was manual. Tries and errors. So the is not much sense describing the full path here. 
 
-```{r model, echo=FALSE, message=FALSE}
+After all the linear model was built, let's look at model overall characteristics:
+```{r model, echo=FALSE}
 s <- summary(lm(formula = stars ~ region + cat1 + cat2 + attributes.Outdoor.Seating + parking + alco + 
                    cat1:alco + parking:alco + I(attributes.Price.Range^4) + I(noise_level^2), 
            data = restaurants, subset = comp_cases))
+
+my_print <- function (x, digits = max(3L, getOption("digits") - 3L), symbolic.cor = x$symbolic.cor, 
+    signif.stars = getOption("show.signif.stars"), ...) 
+{
+    cat("\nCall:\n", paste(deparse(x$call), sep = "\n", collapse = "\n"), 
+        "\n\n", sep = "")
+    resid <- x$residuals
+    df <- x$df
+    rdf <- df[2L]
+    cat(if (!is.null(x$weights) && diff(range(x$weights))) 
+        "Weighted ", "Residuals:\n", sep = "")
+    if (rdf > 5L) {
+        nam <- c("Min", "1Q", "Median", "3Q", "Max")
+        rq <- if (length(dim(resid)) == 2L) 
+            structure(apply(t(resid), 1L, quantile), dimnames = list(nam, 
+                dimnames(resid)[[2L]]))
+        else {
+            zz <- zapsmall(quantile(resid), digits + 1L)
+            structure(zz, names = nam)
+        }
+        print(rq, digits = digits, ...)
+    }
+    else if (rdf > 0L) {
+        print(resid, digits = digits, ...)
+    }
+    else {
+        cat("ALL", df[1L], "residuals are 0: no residual degrees of freedom!")
+        cat("\n")
+    }
+    if (length(x$aliased) == 0L) {
+        cat("\nNo Coefficients\n")
+    }
+
+    cat("\nResidual standard error:", format(signif(x$sigma, 
+        digits)), "on", rdf, "degrees of freedom")
+    cat("\n")
+    if (nzchar(mess <- naprint(x$na.action))) 
+        cat("  (", mess, ")\n", sep = "")
+    if (!is.null(x$fstatistic)) {
+        cat("Multiple R-squared: ", formatC(x$r.squared, digits = digits))
+        cat(",\tAdjusted R-squared: ", formatC(x$adj.r.squared, 
+            digits = digits), "\nF-statistic:", formatC(x$fstatistic[1L], 
+            digits = digits), "on", x$fstatistic[2L], "and", 
+            x$fstatistic[3L], "DF,  p-value:", format.pval(pf(x$fstatistic[1L], 
+                x$fstatistic[2L], x$fstatistic[3L], lower.tail = FALSE), 
+                digits = digits))
+        cat("\n")
+    }
+    correl <- x$correlation
+    if (!is.null(correl)) {
+        p <- NCOL(correl)
+        if (p > 1L) {
+            cat("\nCorrelation of Coefficients:\n")
+            if (is.logical(symbolic.cor) && symbolic.cor) {
+                print(symnum(correl, abbr.colnames = NULL))
+            }
+            else {
+                correl <- format(round(correl, 2), nsmall = 2, 
+                  digits = digits)
+                correl[!lower.tri(correl)] <- ""
+                print(correl[-1, -p, drop = FALSE], quote = FALSE)
+            }
+        }
+    }
+    cat("\n")
+    invisible(x)
+}
+
+my_print(s)
 ```
-```{r, echo=FALSE}
-s$call
+
+
+And then the coefficients table:
+```{r print coefs, echo = FALSE}
+knitr::kable(s$coefficients, caption = "Table 1: coefficients from linear model")
 ```
 
-The impact of variables which are absent in summary table was considered both small and not very sustainable. 
+The impact of variables which are absent in table 1 was considered both small and not very sustainable. 
 
-Let's look at the model closer. The *intercept* - the baseline - is an Cafe in Europe without alcohol, with no regional theme, without outdoor seating and without any parking option.
+Let's look at the coefficients closer. The *intercept* - the baseline - is an Cafe in Europe without alcohol, with no regional theme, without outdoor seating and without any parking option.
 
-We see that there are different intercepts of star rating for different regions and different categories of restaurants. There is a tendency to rate them more in Europe, in Canada mean rating is smaller by 0.17 of a star and in USA even less by next 0.12. What is interesting that it is such a negative effect of being fast food and buffet *exept* you are offering alcohol there! As for cafes alcohol is a bad idea and for other restaurants it is OK.
+We see that there are different intercepts of star rating for different regions and different categories of restaurants. There is a tendency to rate restaurants higher in Europe, in Canada mean rating is smaller by 0.17 of a star and in USA even less by next 0.12. What is interesting that it is such a negative effect of being fast food or buffet *exept* if you are offering alcohol there! But as for cafes alcohol is a bad idea and for other restaurants it is OK.
 
-Parking usually gives significant boost to score, especially if there is a parking street. But.. the effect shrinks by half if you offer alcohol at place.
+Parking usually gives significant boost to score, especially if there is a parking street. But.. the effect shrinks by half if you offer alcohol at place which sounds reasonable.
 
 There is a tendency to rate restaurants with American theme little less then other. The effect is small, but nevertheless. Outdoor seatings gives a little plus to overall rating.
 
-It is interesting how noise level affects rating. It looks like that negative effect of increasing noise is accelerative in nature: every next level of loudness gives a more and more negative effect on rating. From different approximations we choose a one simple: quadratic.
+It is interesting how noise level affects rating. It looks like that negative effect of increasing noise is accelerative in nature: every next level of loudness gives more and more negative effect on rating. From different approximations we choose a one simple: quadratic.
 
 ```{r anova, echo=FALSE}
 anova(lm(formula = stars ~ I(noise_level), data = restaurants, subset = comp_cases), lm(formula = stars ~ I(noise_level^2), data = restaurants, subset = comp_cases), lm(formula = stars ~ I(noise_level^3), data = restaurants, subset = comp_cases), lm(formula = stars ~ I(noise_level^4), data = restaurants, subset = comp_cases), lm(formula = stars ~ exp(noise_level), data = restaurants, subset = comp_cases))
 ```
 
-It is better then other and simpler to interpret than a large polynome.
+It is better then other simple functions and easier to interpret than a large polynome.
 
-So it looks like that people tolerance to the noise is falling rapidly. There is a half of a star between "quite" and "very_loud" levels: 3 ^ 2 * 0.0543 = 0.49, and most of it is between very loud and average levels. If you have a very loud environment you can gain 0.27 of a star going one step towards quite and 0.16 more going one step further. We have found no correlation with other available variables, but there could be some with different types of restaurants. And another important question is how noise levels was measured, it's a pity we don't know.
+So it looks like that people tolerance to the noise is falling rapidly. There is a half of a star between "quite" and "very_loud" levels: 3 ^ 2 * 0.0543 = 0.49, and most of it is between very loud and average levels. If you have a very loud environment you can gain 0.27 of a star going one step towards quite to the "loud" level. And 0.16 more going one step further to the "average". We have found no correlation with other available variables, but really there could be some with different types of restaurants. And another important question is how noise levels was measured, unfortunately we don't know it.
 
 There is a small but sustainable positive effect of price range. It is non linear too, but still it is small.
 
 # Discussion
 
-First of all, an adjusted R-squared of presented model is 0.1208. So the model describes only 12% of variance in restaurant ratings. Surely every restaurant is different and there are much more important things like quality of food, quality of service, good location spots and others and which really should describe the rest.
+First of all, an adjusted R-squared of presented model is 0.1208. So the model describes only 12% of variance in restaurant ratings. And this is understandable: surely every restaurant is different and there are much more important things like quality of food, quality of service, good location spots and others which really should describe the rest.
 
-But as we see we already have some objective, impersonal and measurable factors which could also affect rating. It looks like that working on them could increase business appeal.
-
-Certainly there are numerous interaction possibilities which are hard to explore. One of the main conclusions that we draw from this analysis was that it is better to concentrate on even more narrow theme. For an example like exploring only for one narrow type of of restaurant in specific city. And if you succeed you can compare you results to other types or cities. Also it looks like that such separate analysis could have more real value.
+Certainly there are numerous variable interaction possibilities which are hard to explore. One of the main conclusions that we draw from this analysis was that it is better to concentrate on even more narrow theme. For an example like exploring only one narrow type of restaurant in specific city. And if you succeed you can compare you results to other types or cities. Also it looks like that such separate analysis could have more real value for busyness owners.
 
 There was some simplifications in feature design. The main reason was to decrease feature space for better interpretability. That was the price for choosing a broad question. `cat2` variable is an example: surely it should be more specific. Typology based on `categories` original variable is a deep question by itself.
 
-Another point: there are some doubts about several variables. Actually it could be that price range variable with combinations for an example with alcohol and categories - all are signs of some hidden "type of restaurant" variable. Really good typology of businesses again is a hard question by itself.
+Another point: there are some doubts about several variables. Actually it could be that price range variable with combinations for an example with alcohol and categories or outdoor seatings - all are signs of some hidden "type of restaurant" variable. Really good typology of businesses is both hard vary valuable.
 
+But despite all this we already have some objective, impersonal and measurable factors which could also affect rating. Knowing them could help in running busyness or help to decide which type of it where should be opened.
