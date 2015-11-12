@@ -261,7 +261,7 @@ img {
 </tr>
 </tbody>
 </table>
-<p>The impact of variables which are absent in summary table was considered both small and not very sustainable.</p>
+<p>The impact of variables which are absent in table 1 was considered both small and not very sustainable.</p>
 <p>Let’s look at the coefficients closer. The <em>intercept</em> - the baseline - is an Cafe in Europe without alcohol, with no regional theme, without outdoor seating and without any parking option.</p>
 <p>We see that there are different intercepts of star rating for different regions and different categories of restaurants. There is a tendency to rate restaurants higher in Europe, in Canada mean rating is smaller by 0.17 of a star and in USA even less by next 0.12. What is interesting that it is such a negative effect of being fast food or buffet <em>exept</em> if you are offering alcohol there! But as for cafes alcohol is a bad idea and for other restaurants it is OK.</p>
 <p>Parking usually gives significant boost to score, especially if there is a parking street. But.. the effect shrinks by half if you offer alcohol at place which sounds reasonable.</p>
@@ -286,11 +286,11 @@ img {
 </div>
 <div id="discussion" class="section level1">
 <h1>Discussion</h1>
-<p>First of all, an adjusted R-squared of presented model is 0.1208. So the model describes only 12% of variance in restaurant ratings. Surely every restaurant is different and there are much more important things like quality of food, quality of service, good location spots and others which really should describe the rest.</p>
-<p>But as we see we already have some objective, impersonal and measurable factors which could also affect rating. It looks like that working on them could increase business appeal.</p>
-<p>Certainly there are numerous interaction possibilities which are hard to explore. One of the main conclusions that we draw from this analysis was that it is better to concentrate on even more narrow theme. For an example like exploring only one narrow type of restaurant in specific city. And if you succeed you can compare you results to other types or cities. Also it looks like that such separate analysis could have more real value for busyness owners.</p>
+<p>First of all, an adjusted R-squared of presented model is 0.1208. So the model describes only 12% of variance in restaurant ratings. And this is understandable: surely every restaurant is different and there are much more important things like quality of food, quality of service, good location spots and others which really should describe the rest.</p>
+<p>Certainly there are numerous variable interaction possibilities which are hard to explore. One of the main conclusions that we draw from this analysis was that it is better to concentrate on even more narrow theme. For an example like exploring only one narrow type of restaurant in specific city. And if you succeed you can compare you results to other types or cities. Also it looks like that such separate analysis could have more real value for busyness owners.</p>
 <p>There was some simplifications in feature design. The main reason was to decrease feature space for better interpretability. That was the price for choosing a broad question. <code>cat2</code> variable is an example: surely it should be more specific. Typology based on <code>categories</code> original variable is a deep question by itself.</p>
 <p>Another point: there are some doubts about several variables. Actually it could be that price range variable with combinations for an example with alcohol and categories or outdoor seatings - all are signs of some hidden “type of restaurant” variable. Really good typology of businesses is both hard vary valuable.</p>
+<p>But despite all this we already have some objective, impersonal and measurable factors which could also affect rating. Knowing them could help in running busyness or help to decide which type of it where should be opened.</p>
 </div>
 
 
