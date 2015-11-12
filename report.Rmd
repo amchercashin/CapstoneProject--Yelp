@@ -141,8 +141,9 @@ There will be no attempts to impute missing values. Only `complete.cases` will b
 
 After all data preparation we have data with `r nrow(restaurants[comp_cases,])` observations (complete cases). We have six generated variables mentioned above. And we have some original variables which were left is data set after all filtering. These variables will be tested on affecting star rating. 
 
-```{r, echo=FALSE, caption = "Table 1: Contingency table among region and restaurant category (cat1)"}
-knitr::kable(addmargins(table(region[comp_cases], cat1[comp_cases]), FUN = list(Total = sum), quiet=TRUE))
+To get some intuition of the data let's look at observations count for two selected variables: `region` and `cat1`:
+```{r, echo=FALSE}
+knitr::kable(addmargins(table(region[comp_cases], cat1[comp_cases]), FUN = list(Total = sum), quiet=TRUE), caption = "Table 1: Contingency table among region and restaurant category (cat1)")
 ```
 
 For the details about feature engineering and other data preparation steps please refer to R code in "report.Rmd"" file at: [https://github.com/amchercashin/CapstoneProject--Yelp/tree/business-analisys](https://github.com/amchercashin/CapstoneProject--Yelp/tree/business-analisys)
@@ -239,11 +240,13 @@ And then the coefficients table:
 knitr::kable(s$coefficients, caption = "Table 2: coefficients from linear model")
 ```
 
-The impact of variables which are absent in table 2 was considered both small and not very sustainable. 
+All variables from Table 2 have extremely low p-values - the strong evidence of their association with star rating.
+
+The impact of variables which are absent in Table 2 was considered both small and not very sustainable. 
 
 Let's look at the coefficients closer. The *intercept* - the baseline - is an Cafe in Europe without alcohol, with no regional theme, without outdoor seating and without any parking option.
 
-We see that there are different intercepts of star rating for different regions and different categories of restaurants. There is a tendency to rate restaurants higher in Europe, in Canada mean rating is smaller by 0.17 of a star and in USA even less by next 0.12. What is interesting that it is such a negative effect of being fast food or buffet *exept* if you are offering alcohol there! But as for cafes alcohol is a bad idea and for other restaurants it is OK.
+We see that there are different intercepts for different regions and different categories of restaurants. There is a tendency to rate restaurants higher in Europe, in Canada mean rating is smaller by 0.17 of a star and in USA even less by next 0.12. What is interesting that it is such a negative effect of being fast food or buffet *exept* if you are offering alcohol there! But as for cafes alcohol is a bad idea and for other restaurants it is OK.
 
 Parking usually gives significant boost to score, especially if there is a parking street. But.. the effect shrinks by half if you offer alcohol at place which sounds reasonable.
 

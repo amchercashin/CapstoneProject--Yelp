@@ -83,14 +83,15 @@ img {
 <li>Attributes related to <em>parking</em> we will transform to <code>parking</code> variable with 3 different values: “no”&quot; if there is no parking available, “yes” if there are some parking option except it is not parking street, “street” if there is parking street there.</li>
 <li>From <code>categories</code> var there would be an attempt to make var with some sort of geographic theme or cuisine - <code>cat2</code> variable: <code>ThemedAmerican</code>, <code>ThemedOther</code> - all other regional themes, and <code>NotThemed</code>.</li>
 <li>Another attempt of categorization based on <code>categories</code> variable would be type of restaurant business - <code>cat1</code> variable: <code>Buffets</code>, <code>Fast Food</code>, <code>Cafes</code>, <code>Other</code>.</li>
-<li><code>attributes.Alcohol</code> we’ll simplify to two level factor - <code>alco</code>: <code>YES</code> - if there is some, otherwise - <code>NO</code> and store it in <code>alco</code> variable.</li>
+<li><code>attributes.Alcohol</code> we’ll simplify to two level factor: <code>YES</code> - if there is some, otherwise - <code>NO</code> and store it in <code>alco</code> variable.</li>
 </ol>
-<p>Other variables will be taken from dataset without transformation.</p>
 <p>There are some variables which contains “Good.For” or “Ambiance” substrings in their names. Such vars appears a little vague on what they mean and how they were measured. In this report we will not take them into analysis, concentrating on more clear some.</p>
-<p>We will throw avay variables with more then 30% NA values count. And also variables with near zero variance which would be indicated by <code>nearZeroVar</code> function from <code>caret</code> package with default options.</p>
+<p>We will throw away variables with more then 30% NA values count. And also variables with near zero variance which would be indicated by <code>nearZeroVar</code> function from <code>caret</code> package with default options.</p>
 <p>There will be no attempts to impute missing values. Only <code>complete.cases</code> will be taken.</p>
 <p>After all data preparation we have data with 14887 observations (complete cases). We have six generated variables mentioned above. And we have some original variables which were left is data set after all filtering. These variables will be tested on affecting star rating.</p>
+<p>To get some intuition of the data let’s look at observations count for two selected variables: <code>region</code> and <code>cat1</code>:</p>
 <table>
+<caption>Table 1: Contingency table among region and restaurant category (cat1)</caption>
 <thead>
 <tr class="header">
 <th align="left"></th>
@@ -147,7 +148,7 @@ img {
 <div id="results" class="section level1">
 <h1>Results</h1>
 <p>With variables which left after data preparation and feature engineering the process of variable choosing started. The process in fact was manual. Tries and errors. So the is not much sense describing the full path here.</p>
-<p>After all the linear model was built, let’s look at model overall characteristics:</p>
+<p>After all the final linear model was built, let’s look at model overall characteristics:</p>
 <pre><code>## 
 ## Call:
 ## lm(formula = stars ~ region + cat1 + cat2 + attributes.Outdoor.Seating + 
@@ -163,7 +164,7 @@ img {
 ## F-statistic: 114.6 on 18 and 14868 DF,  p-value: &lt; 2.2e-16</code></pre>
 <p>And then the coefficients table:</p>
 <table>
-<caption>Table 1: coefficients from linear model</caption>
+<caption>Table 2: coefficients from linear model</caption>
 <thead>
 <tr class="header">
 <th align="left"></th>
@@ -309,7 +310,8 @@ img {
 </tr>
 </tbody>
 </table>
-<p>The impact of variables which are absent in table 1 was considered both small and not very sustainable.</p>
+<p>All variables from Table 2 have extremely low p-values - the strong evidence of their association with star rating.</p>
+<p>The impact of variables which are absent in Table 2 was considered both small and not very sustainable.</p>
 <p>Let’s look at the coefficients closer. The <em>intercept</em> - the baseline - is an Cafe in Europe without alcohol, with no regional theme, without outdoor seating and without any parking option.</p>
 <p>We see that there are different intercepts of star rating for different regions and different categories of restaurants. There is a tendency to rate restaurants higher in Europe, in Canada mean rating is smaller by 0.17 of a star and in USA even less by next 0.12. What is interesting that it is such a negative effect of being fast food or buffet <em>exept</em> if you are offering alcohol there! But as for cafes alcohol is a bad idea and for other restaurants it is OK.</p>
 <p>Parking usually gives significant boost to score, especially if there is a parking street. But.. the effect shrinks by half if you offer alcohol at place which sounds reasonable.</p>
