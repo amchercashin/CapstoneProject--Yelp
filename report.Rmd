@@ -2,7 +2,7 @@
 title: "Restaurant busyness attributes effects on business star rating"
 author: "Alexandr Cherkashin"
 date: "11.11.2015"
-output: pdf_document
+output: html_document
 ---
 
 ```{r data loading and munging, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
@@ -40,6 +40,7 @@ parking <- ifelse(restaurants$attributes.Parking.garage == "FALSE" &
                                   restaurants$attributes.Parking.valet == "TRUE", "yes", 
                                   ifelse(restaurants$attributes.Parking.street == "TRUE", "street", NA)))
 parking <- factor(parking, levels = c("no", "yes", "street"))
+restaurants <- restaurants[,!colnames(restaurants) %in% parkingCols]
 
 #Flatten Accepts credit cars attribute----
 credit_cards <- ifelse(sapply(restaurants$attributes.Accepts.Credit.Cards, length) == 0, NA, 
@@ -93,6 +94,23 @@ region <- factor(region, levels = c("Europe", "Canada", "USA"))
 rm(cities, city_centres, city2, geo_cluster, parkingCols)
 alco <- factor(ifelse(restaurants$attributes.Alcohol=="none", "NO", "YES"), levels = c("NO", "YES"))
 
+#Sorting out vars with lots of NA----        
+na_cols <- sapply(restaurants, function(x) sum(is.na(x))) / nrow(restaurants) > 0.3
+restaurants <- restaurants[, !na_cols]; rm(na_cols)
+
+#Flatten Accepts credit cars attribute----
+restaurants$attributes.Accepts.Credit.Cards <- ifelse(sapply(restaurants$attributes.Accepts.Credit.Cards, length) == 0, NA, 
+                                                      unlist(restaurants$attributes.Accepts.Credit.Cards))
+
+#Sorting out near zero variance vars----        
+nz_attr <- nearZeroVar(restaurants[,14:41])
+restaurants <- restaurants[, -(nz_attr+13)]; rm(nz_attr)
+
+#Thow vague vars----
+restaurants <- restaurants[, !grepl("Good.For", colnames(restaurants))]
+restaurants <- restaurants[, !grepl("Good.for", colnames(restaurants))]
+restaurants <- restaurants[, !grepl("Ambience", colnames(restaurants))]
+
 comp_cases <- complete.cases(data.frame(region, cat1, cat2, restaurants$attributes.Outdoor.Seating, parking, alco,
                                    restaurants$attributes.Price.Range, noise_level))
 ```
@@ -111,15 +129,21 @@ In addition dataset contain several busyness characteristics some of them we wil
 1. From latitude and longitude we'll generate `region` variable which can take three different values: "USA", "Canada", "Europe".
 2. `attributes.Noise.Level` will be encoded into integer,  from "quiet" to "very_loud" into `0:3`, and stored in `noise_level` var.
 3. Attributes related to *parking* we will transform to `parking` variable with 3 different values: "no"" if there is no parking available, "yes" if there are some parking option except it is not parking street, "street" if there is parking street there.
-4. From `categories` var there would be an attempt to make var with some sort of geographic theme or cuisine: `ThemedAmerican`, `ThemedOther` - all other regional themes, and `NotThemed`.
-5. Another attempt of categorization based on `categories` variable would be type of restaurant business: `Buffets`, `Fast Food`, `Bars`, `Cafes`, `Other`.
+4. From `categories` var there would be an attempt to make var with some sort of geographic theme or cuisine - `cat2` variable: `ThemedAmerican`, `ThemedOther` - all other regional themes, and `NotThemed`.
+5. Another attempt of categorization based on `categories` variable would be type of restaurant business - `cat1` variable: `Buffets`, `Fast Food`, `Cafes`, `Other`.
 6. `attributes.Alcohol` we'll simplify to two level factor: `YES` - if there is some, otherwise - `NO` and store it in `alco` variable.
-
-Other variables will be taken from dataset without transformation.
 
 There are some variables which contains "Good.For" or "Ambiance" substrings in their names. Such vars appears a little vague on what they mean and how they were measured. In this report we will not take them into analysis, concentrating on more clear some.
 
+We will throw away variables with more then 30% NA values count. And also variables with near zero variance which would be indicated by `nearZeroVar` function from `caret` package with default options.
+
 There will be no attempts to impute missing values. Only `complete.cases` will be taken.
+
+After all data preparation we have data with `r nrow(restaurants[comp_cases,])` observations (complete cases). We have six generated variables mentioned above. And we have some original variables which were left is data set after all filtering. These variables will be tested on affecting star rating. 
+
+```{r, echo=FALSE, caption = "Table 1: Contingency table among region and restaurant category (cat1)"}
+knitr::kable(addmargins(table(region[comp_cases], cat1[comp_cases]), FUN = list(Total = sum), quiet=TRUE))
+```
 
 For the details about feature engineering and other data preparation steps please refer to R code in "report.Rmd"" file at: [https://github.com/amchercashin/CapstoneProject--Yelp/tree/business-analisys](https://github.com/amchercashin/CapstoneProject--Yelp/tree/business-analisys)
 
@@ -133,7 +157,7 @@ But after all considerations choice was made in favor of linear model. The main 
 
 With variables which left after data preparation and feature engineering the process of variable choosing started. The process in fact was manual. Tries and errors. So the is not much sense describing the full path here. 
 
-After all the linear model was built, let's look at model overall characteristics:
+After all the final linear model was built, let's look at model overall characteristics:
 ```{r model, echo=FALSE}
 s <- summary(lm(formula = stars ~ region + cat1 + cat2 + attributes.Outdoor.Seating + parking + alco + 
                    cat1:alco + parking:alco + I(attributes.Price.Range^4) + I(noise_level^2), 
@@ -212,10 +236,10 @@ my_print(s)
 
 And then the coefficients table:
 ```{r print coefs, echo = FALSE}
-knitr::kable(s$coefficients, caption = "Table 1: coefficients from linear model")
+knitr::kable(s$coefficients, caption = "Table 2: coefficients from linear model")
 ```
 
-The impact of variables which are absent in table 1 was considered both small and not very sustainable. 
+The impact of variables which are absent in table 2 was considered both small and not very sustainable. 
 
 Let's look at the coefficients closer. The *intercept* - the baseline - is an Cafe in Europe without alcohol, with no regional theme, without outdoor seating and without any parking option.
 
@@ -223,7 +247,7 @@ We see that there are different intercepts of star rating for different regions 
 
 Parking usually gives significant boost to score, especially if there is a parking street. But.. the effect shrinks by half if you offer alcohol at place which sounds reasonable.
 
-There is a tendency to rate restaurants with American theme little less then other. The effect is small, but nevertheless. Outdoor seatings gives a little plus to overall rating.
+There is a tendency to rate restaurants with American theme little lower then others. The effect is small, but nevertheless. Outdoor seatings gives a little plus to overall rating.
 
 It is interesting how noise level affects rating. It looks like that negative effect of increasing noise is accelerative in nature: every next level of loudness gives more and more negative effect on rating. From different approximations we choose a one simple: quadratic.
 
