@@ -1,28 +1,161 @@
-Simple attributes you can deal with to improve your restaurant rating on Yelp.
+Attributes to deal with to improve your restaurant rating on Yelp
 ========================================================
 author: 
 date: 
 
-First Slide
-========================================================
+```{r data loading and munging, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
+library(jsonlite)
+library(caret)
 
-For more details on authoring R presentations click the
-**Help** button on the toolbar.
+# Reading data----
+business <- readRDS("./data/businessRDS")
+restaurants <- sapply(business$categories, function(x) "Restaurants" %in% x)
+restaurants <- flatten(business[restaurants,])
 
-- Bullet 1
-- Bullet 2
-- Bullet 3
+#DATA MUNGING
+# Convinient column names----
+colnames(restaurants) <- make.names(colnames(restaurants))
 
-Slide With Code
-========================================================
+#Noise level attribute to integer level----
+noise_level <- restaurants$attributes.Noise.Level
+noise_level[noise_level == "quiet"] <- 0
+noise_level[noise_level == "average"] <- 1
+noise_level[noise_level == "loud"] <- 2
+noise_level[noise_level == "very_loud"] <- 3
+noise_level <- as.integer(noise_level)
 
-```{r}
-summary(cars)
+#Parking to three categories: free, paid, no ----
+parkingCols <- grep("Parking", colnames(restaurants), value = TRUE)
+restaurants[,parkingCols][is.na(restaurants[,parkingCols])] <- "n_a"
+parking <- ifelse(restaurants$attributes.Parking.garage == "FALSE" &
+                           restaurants$attributes.Parking.validated == "FALSE" &
+                           restaurants$attributes.Parking.lot == "FALSE" &
+                           restaurants$attributes.Parking.valet == "FALSE" &
+                           restaurants$attributes.Parking.street == "FALSE", "no", 
+                           ifelse(restaurants$attributes.Parking.garage == "TRUE" |
+                                  restaurants$attributes.Parking.validated == "TRUE" |
+                                  restaurants$attributes.Parking.lot == "TRUE" |
+                                  restaurants$attributes.Parking.valet == "TRUE", "yes", 
+                                  ifelse(restaurants$attributes.Parking.street == "TRUE", "street", NA)))
+parking <- factor(parking, levels = c("no", "yes", "street"))
+restaurants <- restaurants[,!colnames(restaurants) %in% parkingCols]
+
+#Flatten Accepts credit cars attribute----
+credit_cards <- ifelse(sapply(restaurants$attributes.Accepts.Credit.Cards, length) == 0, NA, 
+                                                      unlist(restaurants$attributes.Accepts.Credit.Cards))
+
+#Dealing with categories vars----
+cat2 <- sapply(restaurants$categories, function(x) {
+        if (sum(x=="Afghan")>0|sum(x=="African")>0|sum(x=="Asian Fusion")>0|sum(x=="Bangladeshi")>0|sum(x=="Basque")>0|
+            sum(x=="Bavarian")>0|sum(x=="Belgian")>0|sum(x=="British")>0|sum(x=="aCajun/Creole")>0|sum(x=="Cambodian")>0|
+            sum(x=="Cantonese")>0|sum(x=="Cuban")>0|sum(x=="Egyptian")>0|sum(x=="Ethiopian")>0|sum(x=="French")>0|
+            sum(x=="German")>0|sum(x=="Greek")>0|sum(x=="Hawaiian")>0|sum(x=="Himalayan/Nepalese")>0|sum(x=="Hungarian")>0|
+            sum(x=="Indian")>0|sum(x=="Indonesian")>0|sum(x=="Irish")>0|sum(x=="Italian")>0|sum(x=="Japanese")>0|
+            sum(x=="Korean")>0|sum(x=="Latin American")>0|sum(x=="Lebanese")>0|sum(x=="Malaysian")>0|sum(x=="Mediterranean")>0|
+            sum(x=="Arabian")>0|sum(x=="Argentine")>0|sum(x=="Australian")>0|sum(x=="Brazilian")>0|sum(x=="Caribbean")>0|
+            sum(x=="Arabian")>0|sum(x=="Argentine")>0|sum(x=="Australian")>0|sum(x=="Brazilian")>0|sum(x=="Caribbean")>0|
+            sum(x=="Chinese")>0|sum(x=="Colombian")>0|sum(x=="Czech")>0|sum(x=="Eastern European")>0|sum(x=="Eastern German")>0|
+            sum(x=="Ethnic Food")>0|sum(x=="Filipino")>0|sum(x=="Czech")>0|sum(x=="Haitian")>0|sum(x=="Iberian")>0|
+            sum(x=="Laotian")>0|sum(x=="Middle Eastern")>0|sum(x=="Modern European")>0|sum(x=="Mongolian")>0|sum(x=="Moroccan")>0|
+            sum(x=="Oriental")>0|sum(x=="Pakistani")>0|sum(x=="Persian/Iranian")>0|sum(x=="Peruvian")>0|sum(x=="Polish")>0|
+            sum(x=="Portuguese")>0|sum(x=="Russian")>0|sum(x=="Scandinavian")>0|sum(x=="Scottish")>0|sum(x=="Shanghainese")>0|
+            sum(x=="Singaporean")>0|sum(x=="Southern")>0|sum(x=="Spanish")>0|sum(x=="Szechuan")>0|sum(x=="Taiwanese")>0|
+            sum(x=="Thai")>0|sum(x=="Trinidadian")>0|sum(x=="Turkish")>0|sum(x=="Ukrainian")>0|sum(x=="Uzbek")>0|
+            sum(x=="Venezuelan")>0|sum(x=="Vietnamese")>0|sum(x=="Turkish")>0|sum(x=="Ukrainian")>0|sum(x=="Uzbek")>0) {
+                "ThemedOther"}
+        else {if(sum(x=="American (New)")>0|sum(x=="American (Traditional)")>0) {"ThemedAmerican"}
+                else {if (sum(x=="Mexican")>0|sum(x=="Tex-Mex")>0) {"ThemedOther"}
+                        else "NotThemed"}
+                }
+})
+
+cat1 <- sapply(restaurants$categories, function(x) {
+        if (sum(x=="Buffets")>0) "Buffets"
+        else if(sum(x=="Fast Food")>0|sum(x=="Chicken Wings")>0|sum(x=="Burgers")>0|sum(x=="Pizza")>0) "Fast Food"
+                #else if (sum(x=="Restaurants")>0) "Restaurants"
+                        #else if (sum(x=="Bars")>0|sum(x=="Pubs")>0|sum(x=="Irish Pub")>0) "Bars"
+                                else if (sum(x=="Cafes")>0) "Cafes"
+                                        else "OtherRestaurants"
+        
+})
+cat1 <- factor(cat1, levels = c("Cafes","OtherRestaurants", "Fast Food", "Buffets"))
+
+#Geographocals points----
+library(ggmap)
+cities<-c('Edinburgh, UK', 'Karlsruhe, Germany', 'Montreal, Canada', 'Waterloo, Canada', 
+          'Pittsburgh, PA', 'Charlotte, NC', 'Urbana-Champaign, IL', 'Phoenix, AZ', 'Las Vegas, NV', 'Madison, WI')
+city_centres<-geocode(cities)
+geo_cluster<-kmeans(restaurants[,c('longitude','latitude')],city_centres)
+city2<- factor(geo_cluster$cluster, levels=1:10, labels = cities)
+region <- ifelse(geo_cluster$cluster<=2, "Europe", ifelse(geo_cluster$cluster<=4, "Canada", "USA"))
+region <- factor(region, levels = c("Europe", "Canada", "USA"))
+rm(cities, city_centres, city2, geo_cluster, parkingCols)
+alco <- factor(ifelse(restaurants$attributes.Alcohol=="none", "NO", "YES"), levels = c("NO", "YES"))
+
+#Sorting out vars with lots of NA----        
+na_cols <- sapply(restaurants, function(x) sum(is.na(x))) / nrow(restaurants) > 0.3
+restaurants <- restaurants[, !na_cols]; rm(na_cols)
+
+#Flatten Accepts credit cars attribute----
+restaurants$attributes.Accepts.Credit.Cards <- ifelse(sapply(restaurants$attributes.Accepts.Credit.Cards, length) == 0, NA, 
+                                                      unlist(restaurants$attributes.Accepts.Credit.Cards))
+
+#Sorting out near zero variance vars----        
+nz_attr <- nearZeroVar(restaurants[,14:41])
+restaurants <- restaurants[, -(nz_attr+13)]; rm(nz_attr)
+
+#Thow vague vars----
+restaurants <- restaurants[, !grepl("Good.For", colnames(restaurants))]
+restaurants <- restaurants[, !grepl("Good.for", colnames(restaurants))]
+restaurants <- restaurants[, !grepl("Ambience", colnames(restaurants))]
+
+comp_cases <- complete.cases(data.frame(region, cat1, cat2, restaurants$attributes.Outdoor.Seating, parking, alco,
+                                   restaurants$attributes.Price.Range, noise_level))
+s <- summary(lm(formula = stars ~ region + cat1 + cat2 + attributes.Outdoor.Seating + parking + alco + 
+                   cat1:alco + parking:alco + I(attributes.Price.Range^4) + I(noise_level^2), 
+           data = restaurants, subset = comp_cases))
 ```
 
-Slide With Plot
+Where and what
 ========================================================
 
-```{r, echo=FALSE}
-plot(cars)
+Mean rating:
+```{r baselines, echo=FALSE}
+df <- data.frame(Erope = c(coef(s)[1,1], coef(s)[1,1]+coef(s)[4,1], coef(s)[1,1]+coef(s)[5,1], coef(s)[1,1]+coef(s)[6,1]), 
+           Canada = c(coef(s)[1,1]+coef(s)[2,1], coef(s)[1,1]+coef(s)[2,1]+coef(s)[4,1], 
+                      coef(s)[1,1]+coef(s)[2,1]+coef(s)[5,1], coef(s)[1,1]+coef(s)[2,1]+coef(s)[6,1]), 
+           USA = c(coef(s)[1,1]+coef(s)[3,1], coef(s)[1,1]+coef(s)[3,1]+coef(s)[4,1], 
+                      coef(s)[1,1]+coef(s)[3,1]+coef(s)[5,1], coef(s)[1,1]+coef(s)[3,1]+coef(s)[6,1]))
+row.names(df) <- c("Cafe", "Other", "Fast Food", "Buffet")
+knitr::kable(df, digits = 2, caption = "Mean star rating")
 ```
+
+First answer these questions:
+- In what part of the world your restaurant is?
+- What restaurant type your restaurant is?
+
+Thus you can find the baseline. There is a tendency to rate restaurants different in different parts of the world.
+
+Parking
+========================================================
+
+If you planning to open business consider a place with parking options. This could boost your score from 0.25 to 0.4 of a star.
+
+If you already have no parking consider reorient and start to offer alcohol. This could shrink your no parking penalty by half!
+
+Alcohol is tricky
+========================================================
+
+It could help with no parking but it needs care:
+
+ - If you are a **Cafe** and offering alcohol: get a **-0.2** rating penalty!
+ - But if you are a **fast food** or **buffet** start to offer some: **+0.5** your reward!
+
+Noise is awful
+========================================================
+
+No matter who you are: reduce the **NOISE**!
+
+If it is stated that you have *very loud* environment, going one step to *loud* will give you **0.27** and one step further to *average* level - **0.16** more.
+
+Almost **half of a star** lays here!

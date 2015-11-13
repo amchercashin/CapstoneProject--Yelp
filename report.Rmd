@@ -1,5 +1,5 @@
 ---
-title: "Restaurant busyness attributes effects on business star rating"
+title: "Restaurant business attributes affecting Yelp star rating"
 author: "Alexandr Cherkashin"
 date: "11.11.2015"
 output: html_document
@@ -117,14 +117,14 @@ comp_cases <- complete.cases(data.frame(region, cat1, cat2, restaurants$attribut
 
 # Introduction
 
-This report provides an attempt to find some objective restaurant characteristics which affects business star rating. There is no goal of building comprehensive predictive model. Instead there is an attempt to identify meaningful attributes that busyness of type "restaurants" could deal with to improve their star rating on Yelp. Understanding what is important to customers is crucial for running business and we hope this report could help.
+This report provides an attempt to find some objective restaurant characteristics which affects business star rating. There is no goal of building comprehensive predictive model. Instead there is an attempt to identify meaningful attributes that business of type "restaurants" could deal with to improve their star rating on Yelp. Understanding what is important to customers is crucial for running business and we hope this report could help.
 
 # Methods and Data
 
 ### Data
-In analysis we will use Yelp business dataset. This dataset contains `star` variable that is an averaged business star rating from 1 to 5 star rounded to half of a star. It will be our response variable. As we interested in businesses with type "restaurant" we'll take into analysis only observations with string "Restaurants" in `categories` variable.
+In analysis we will use Yelp business dataset. This dataset contains `star` variable that is an averaged business star rating from 1 to 5 star rounded to half of a star. It will be our response variable. As we are interested in businesses with the type "restaurant" we need to analyze only the observations with the string "Restaurants" in the variable `category`.
 
-In addition dataset contain several busyness characteristics some of them we will use as predictors. There are different kinds of variables. Some of them we will transform:
+In addition dataset contains several business characteristics some of them will be used as predictors. There are different kinds of variables. Some of them we will transform:
 
 1. From latitude and longitude we'll generate `region` variable which can take three different values: "USA", "Canada", "Europe".
 2. `attributes.Noise.Level` will be encoded into integer,  from "quiet" to "very_loud" into `0:3`, and stored in `noise_level` var.
@@ -268,10 +268,10 @@ There is a small but sustainable positive effect of price range. It is non linea
 
 First of all, an adjusted R-squared of presented model is 0.1208. So the model describes only 12% of variance in restaurant ratings. And this is understandable: surely every restaurant is different and there are much more important things like quality of food, quality of service, good location spots and others which really should describe the rest.
 
-Certainly there are numerous variable interaction possibilities which are hard to explore. One of the main conclusions that we draw from this analysis was that it is better to concentrate on even more narrow theme. For an example like exploring only one narrow type of restaurant in specific city. And if you succeed you can compare you results to other types or cities. Also it looks like that such separate analysis could have more real value for busyness owners.
+Certainly there are numerous variable interaction possibilities which are hard to explore. One of the main conclusions that we draw from this analysis was that it is better to concentrate on even more narrow theme. For an example like exploring only one narrow type of restaurant in specific city. And if you succeed you can compare you results to other types or cities. Also it looks like that such separate analysis could have more real value for business owners.
 
 There was some simplifications in feature design. The main reason was to decrease feature space for better interpretability. That was the price for choosing a broad question. `cat2` variable is an example: surely it should be more specific. Typology based on `categories` original variable is a deep question by itself.
 
 Another point: there are some doubts about several variables. Actually it could be that price range variable with combinations for an example with alcohol and categories or outdoor seatings - all are signs of some hidden "type of restaurant" variable. Really good typology of businesses is both hard vary valuable.
 
-But despite all this we already have some objective, impersonal and measurable factors which could also affect rating. Knowing them could help in running busyness or help to decide which type of it where should be opened.
+But despite all this we already have some objective, impersonal and measurable factors which could also affect rating. Knowing them could help in running business or help to decide which type of it where should be opened.

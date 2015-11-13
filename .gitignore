@@ -68,3 +68,6 @@ data
 # CACHE
 cache
 report_cache
+slide_deck-cache
+
+rsconnect
