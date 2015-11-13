@@ -2,7 +2,7 @@
 title: "Restaurant business attributes affecting Yelp star rating"
 author: "Alexandr Cherkashin"
 date: "11.11.2015"
-output: html_document
+output: pdf_document
 ---
 
 ```{r data loading and munging, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
@@ -142,6 +142,7 @@ There will be no attempts to impute missing values. Only `complete.cases` will b
 After all data preparation we have data with `r nrow(restaurants[comp_cases,])` observations (complete cases). We have six generated variables mentioned above. And we have some original variables which were left is data set after all filtering. These variables will be tested on affecting star rating. 
 
 To get some intuition of the data let's look at observations count for two selected variables: `region` and `cat1`:
+
 ```{r, echo=FALSE}
 knitr::kable(addmargins(table(region[comp_cases], cat1[comp_cases]), FUN = list(Total = sum), quiet=TRUE), caption = "Table 1: Contingency table among region and restaurant category (cat1)")
 ```
@@ -234,6 +235,7 @@ my_print <- function (x, digits = max(3L, getOption("digits") - 3L), symbolic.co
 my_print(s)
 ```
 
+\pagebreak
 
 And then the coefficients table:
 ```{r print coefs, echo = FALSE}
@@ -253,6 +255,8 @@ Parking usually gives significant boost to score, especially if there is a parki
 There is a tendency to rate restaurants with American theme little lower then others. The effect is small, but nevertheless. Outdoor seatings gives a little plus to overall rating.
 
 It is interesting how noise level affects rating. It looks like that negative effect of increasing noise is accelerative in nature: every next level of loudness gives more and more negative effect on rating. From different approximations we choose a one simple: quadratic.
+
+\pagebreak
 
 ```{r anova, echo=FALSE}
 anova(lm(formula = stars ~ I(noise_level), data = restaurants, subset = comp_cases), lm(formula = stars ~ I(noise_level^2), data = restaurants, subset = comp_cases), lm(formula = stars ~ I(noise_level^3), data = restaurants, subset = comp_cases), lm(formula = stars ~ I(noise_level^4), data = restaurants, subset = comp_cases), lm(formula = stars ~ exp(noise_level), data = restaurants, subset = comp_cases))
