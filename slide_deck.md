@@ -5,6 +5,16 @@ date:
 
 
 
+Method
+========================================================
+
+Every restaurant is different, but some characteristics they share. Examples:
+ - Is there parking
+ - Do they have alcohol in menu
+ - What's the noise level there
+
+Using Yelp business dataset, treating star rating as a response and these and others attributes as predictors, we will use linear model to infer which is really important and where.
+
 Where and what
 ========================================================
 
