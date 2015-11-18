@@ -124,7 +124,7 @@ This report provides an attempt to find some objective restaurant characteristic
 ### Data
 In analysis we will use Yelp business dataset. This dataset contains `star` variable that is an averaged business star rating from 1 to 5 star rounded to half of a star. It will be our response variable. As we are interested in businesses with the type "restaurant" we need to analyze only the observations with the string "Restaurants" in the variable `category`.
 
-In addition dataset contains several business characteristics some of them will be used as predictors. There are different kinds of variables. Some of them we will transform:
+In addition dataset contains several business characteristics some of them will be used as predictors. There are different kinds of variables. Some of them transformed:
 
 1. From latitude and longitude we'll generate `region` variable which can take three different values: "USA", "Canada", "Europe".
 2. `attributes.Noise.Level` will be encoded into integer,  from "quiet" to "very_loud" into `0:3`, and stored in `noise_level` var.
@@ -133,13 +133,13 @@ In addition dataset contains several business characteristics some of them will 
 5. Another attempt of categorization based on `categories` variable would be type of restaurant business - `cat1` variable: `Buffets`, `Fast Food`, `Cafes`, `Other`.
 6. `attributes.Alcohol` we'll simplify to two level factor: `YES` - if there is some, otherwise - `NO` and store it in `alco` variable.
 
-There are some variables which contains "Good.For" or "Ambiance" substrings in their names. Such vars appears a little vague on what they mean and how they were measured. In this report we will not take them into analysis, concentrating on more clear some.
+There are some variables which contains "Good.For" or "Ambiance" substrings in their names. Such vars appears a little vague on what they mean and how they were measured. In this report we will not take them into analysis, concentrating on more clear ones.
 
-We will throw away variables with more then 30% NA values count. And also variables with near zero variance which would be indicated by `nearZeroVar` function from `caret` package with default options.
+We will dismiss variables with more then 30% NA values count. And also variables with near zero variance which would be indicated by `nearZeroVar` function from `caret` package with default options.
 
 There will be no attempts to impute missing values. Only `complete.cases` will be taken.
 
-After all data preparation we have data with `r nrow(restaurants[comp_cases,])` observations (complete cases). We have six generated variables mentioned above. And we have some original variables which were left is data set after all filtering. These variables will be tested on affecting star rating. 
+After all data preparation we have data with `r nrow(restaurants[comp_cases,])` observations (complete cases). We have six generated variables mentioned above. And we have some original variables which were left in data set after all filters applyed. These variables will be tested on affecting star rating. 
 
 To get some intuition of the data let's look at observations count for two selected variables: `region` and `cat1`:
 
@@ -153,11 +153,11 @@ For the details about feature engineering and other data preparation steps pleas
 
 There was some hesitation on what model to choose. Actually, our response: `stars`, which was measured in halves of a star from 0 to 5, could be interpreted as an ordered factor variable. It has an ordered nature for sure, it is an averaged users star rating rounded to half of a star. And there is no guarantee that the "distances" between star halves are same despite their location. So models like [ordered logit](https://web.stanford.edu/~hastie/Papers/ordered.pdf) or [ordered probit](http://web.stanford.edu/class/polisci203/ordered.pdf) could make sense.
 
-But after all considerations choice was made in favor of linear model. The main point is that the goal of this work is not to build a good predictive model. Instead, we'd like to find what affects star rating most and try to infer the effect and *interpret* it. So the interpretability is has the most value. And linear model is really easier to interpret. So we'll use linear models and refer to `star` variable like it is a real number.
+But after all considerations choice was made in favor of linear model. The main point is that the goal of this work is not to build a good predictive model. Instead, we'd like to find what affects star rating mostly and try to infer the effect and *interpret* it. So the interpretability is has the most value. And linear model is really easier to interpret. So we'll use linear models and refer to `star` variable like it is a real number.
 
 # Results
 
-With variables which left after data preparation and feature engineering the process of variable choosing started. The process in fact was manual. Tries and errors. So the is not much sense describing the full path here. 
+With variables which left after data preparation and feature engineering the process of variable choosing started. The process in fact was manual. Trials and errors. So the is not much sense describing the full path here. 
 
 After all the final linear model was built, let's look at model overall characteristics:
 ```{r model, echo=FALSE}
@@ -264,18 +264,18 @@ anova(lm(formula = stars ~ I(noise_level), data = restaurants, subset = comp_cas
 
 It is better then other simple functions and easier to interpret than a large polynome.
 
-So it looks like that people tolerance to the noise is falling rapidly. There is a half of a star between "quite" and "very_loud" levels: 3 ^ 2 * 0.0543 = 0.49, and most of it is between very loud and average levels. If you have a very loud environment you can gain 0.27 of a star going one step towards quite to the "loud" level. And 0.16 more going one step further to the "average". We have found no correlation with other available variables, but really there could be some with different types of restaurants. And another important question is how noise levels was measured, unfortunately we don't know it.
+So it looks like that peoples tolerance to the noise is falling rapidly. There is a half of a star between "quite" and "very_loud" levels: 3 ^ 2 * 0.0543 = 0.49, and most of it is between very loud and average levels. If you have a very loud environment you can gain 0.27 of a star going one step towards quite to the "loud" level. And 0.16 more going one step further to the "average". We have found no correlation with other available variables, but really there could be some with different types of restaurants. And another important question is how noise levels was measured, unfortunately we don't know it.
 
 There is a small but sustainable positive effect of price range. It is non linear too, but still it is small.
 
 # Discussion
 
-First of all, an adjusted R-squared of presented model is 0.1208. So the model describes only 12% of variance in restaurant ratings. And this is understandable: surely every restaurant is different and there are much more important things like quality of food, quality of service, good location spots and others which really should describe the rest.
+First of all, an adjusted R-squared of presented model is 0.1208. So the model describes only 12% of variance in restaurant ratings. And this is understandable: surely every restaurant is different and there are much more important things like quality of food, quality of service, good location spots and others which really should describe the rest of the difference.
 
-Certainly there are numerous variable interaction possibilities which are hard to explore. One of the main conclusions that we draw from this analysis was that it is better to concentrate on even more narrow theme. For an example like exploring only one narrow type of restaurant in specific city. And if you succeed you can compare you results to other types or cities. Also it looks like that such separate analysis could have more real value for business owners.
+Certainly there are numerous variables interactions possibile which are hard to explore. One of the main conclusions that we draw from this analysis was that it is better to concentrate on even more narrow theme. For an example like exploring only one narrow type of restaurant in specific city. And if you succeed you can compare you results to other types or cities. Also it looks like that such separate analysis could have more real value for business owners.
 
-There was some simplifications in feature design. The main reason was to decrease feature space for better interpretability. That was the price for choosing a broad question. `cat2` variable is an example: surely it should be more specific. Typology based on `categories` original variable is a deep question by itself.
+There were some simplifications in feature design. The main reason was to decrease feature space for better interpretability. That was the price for choosing a broad question. `cat2` variable is an example: surely it should be more specific. Typology based on `categories` original variable is a deep question by itself.
 
-Another point: there are some doubts about several variables. Actually it could be that price range variable with combinations for an example with alcohol and categories or outdoor seatings - all are signs of some hidden "type of restaurant" variable. Really good typology of businesses is both hard vary valuable.
+Another point: there are some doubts about having several variables. Actually it is possible that price range variable with combinations for an example with alcohol and categories or outdoor seatings - are signs of some hidden "type of restaurant" variable. Really good typology of businesses is both hard very valuable.
 
-But despite all this we already have some objective, impersonal and measurable factors which could also affect rating. Knowing them could help in running business or help to decide which type of it where should be opened.
+But despite all this we already have some objective, impersonal and measurable factors which could also affect rating. Knowing them could help in running business or help to decide which type of it should be opened and where.
