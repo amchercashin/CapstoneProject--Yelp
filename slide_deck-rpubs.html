@@ -757,8 +757,24 @@ hljs.initHighlightingOnLoad();
 
 </section>
 <section data-transition="linear" data-transition-speed="default">
-<h3>Where and what</h3>
+<h3>Method</h3>
 <div class="slideContent" >
+<p>Every restaurant is different, but some characteristics they share. Examples:</p>
+
+<ul>
+<li>Is there parking</li>
+<li>Do they have alcohol in menu</li>
+<li>What&#39;s the noise level there</li>
+</ul>
+
+<p>Using Yelp business dataset, treating star rating as a response and these and others attributes as predictors, we will use <strong>linear model</strong> to infer which is really important and where.</p>
+
+</div>
+
+</section>
+<section data-transition="linear" data-transition-speed="default">
+<h3>Where and what</h3>
+<div class="column column1 slideContent" >
 <p>Mean rating:</p>
 
 <table><thead>
@@ -795,6 +811,12 @@ hljs.initHighlightingOnLoad();
 </tr>
 </tbody></table>
 
+
+</div>
+
+<div class="column column2 slideContent" >
+
+
 <p>First answer these questions:</p>
 
 <ul>
@@ -802,24 +824,29 @@ hljs.initHighlightingOnLoad();
 <li>What restaurant type your restaurant is?</li>
 </ul>
 
-<p>Thus you can find the baseline. There is a tendency to rate restaurants different in different parts of the world.</p>
+<p>Thus you can find the baseline. There is a tendency to <strong>rate</strong> restaurants <strong>different</strong> in different parts of the world.</p>
 
 </div>
 
 </section>
 <section data-transition="linear" data-transition-speed="default">
-<h3>Parking</h3>
-<div class="slideContent" >
-<p>If you planning to open business consider a place with parking options. This could boost your score from 0.25 to 0.4 of a star.</p>
+<h3>Some attributes to your attention</h3>
+<div class="column column1 slideContent" >
+<p>Parking:  </p>
 
-<p>If you already have no parking consider reorient and start to offer alcohol. This could shrink your no parking penalty by half!</p>
+<ul>
+<li>If you planning to open business consider a place with parking options. This could boost your score from <strong>0.25</strong> to <strong>0.4</strong> of a star.</li>
+<li>If you already have no parking consider reorient and start to offer alcohol. This could <strong>shrink</strong> your no parking penalty <strong>by half</strong>!</li>
+</ul>
+
 
 </div>
 
-</section>
-<section data-transition="linear" data-transition-speed="default">
-<h3>Alcohol is tricky</h3>
-<div class="slideContent" >
+<div class="column column2 slideContent" >
+
+
+<p>Alcohol:  </p>
+
 <p>It could help with no parking but it needs care:</p>
 
 <ul>
@@ -838,6 +865,12 @@ hljs.initHighlightingOnLoad();
 <p>If it is stated that you have <em>very loud</em> environment, going one step to <em>loud</em> will give you <strong>0.27</strong> and one step further to <em>average</em> level - <strong>0.16</strong> more.</p>
 
 <p>Almost <strong>half of a star</strong> lays here!</p>
+
+<p>/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\</p>
+
+<p>Thanks for your time! </p>
+
+<p>More details could be found in <em>report.pdf</em> and <em>source code</em> on <a href="https://github.com/amchercashin/CapstoneProject--Yelp/tree/business-analisys">GitHub repo</a>.</p>
 
 </div>
 
